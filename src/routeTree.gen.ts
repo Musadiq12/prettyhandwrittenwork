@@ -15,6 +15,7 @@ import { Route as MyPdfRouteImport } from './routes/my-pdf'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const AdminOrdersRoute = AdminOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/my-pdf': typeof MyPdfRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/my-pdf': typeof MyPdfRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
@@ -69,14 +77,27 @@ export interface FileRoutesById {
   '/my-pdf': typeof MyPdfRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/my-pdf' | '/reset-password' | '/admin/orders' | '/admin/'
+    | '/'
+    | '/admin'
+    | '/my-pdf'
+    | '/reset-password'
+    | '/admin/orders'
+    | '/admin/settings'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/my-pdf' | '/reset-password' | '/admin/orders' | '/admin'
+  to:
+    | '/'
+    | '/my-pdf'
+    | '/reset-password'
+    | '/admin/orders'
+    | '/admin/settings'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -84,6 +105,7 @@ export interface FileRouteTypes {
     | '/my-pdf'
     | '/reset-password'
     | '/admin/orders'
+    | '/admin/settings'
     | '/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -138,16 +160,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrdersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
   AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminOrdersRoute: AdminOrdersRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
