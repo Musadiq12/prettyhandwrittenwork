@@ -365,8 +365,8 @@ function OrderForm() {
           {delivery !== "pdf" && <F k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" maxLength={6} {...register("pin")} /></F>}
           <div className="sm:col-span-2"><F k="notes" label="Notes / special instructions"><Textarea id="f-notes" rows={4} {...register("notes")} /></F></div>
           <div className="sm:col-span-2">
-            <button type="submit" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <MessageCircle className="size-5" aria-hidden /> Send order on WhatsApp
+            <button type="submit" disabled={saving} className="disabled:opacity-60 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <MessageCircle className="size-5" aria-hidden /> {saving ? "Saving…" : "Send order on WhatsApp"}
             </button>
             <p className="mt-3 text-center text-sm text-muted-foreground">Send your reference files, photos or PDFs in the WhatsApp chat after this.</p>
           </div>
