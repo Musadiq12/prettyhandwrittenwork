@@ -44,14 +44,14 @@ function SettingsPage() {
     const r = schema.safeParse(f);
     if (!r.success) {
       setErrors(Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message])));
-      return toast.error("Please fix the highlighted fields.");
+      { toast.error("Please fix the highlighted fields."); return; }
     }
-    if (r.data.shipping_min > r.data.shipping_max) { setErrors({ shipping_max: "Must be ≥ minimum" }); return toast.error("Shipping max must be at least the minimum."); }
+    if (r.data.shipping_min > r.data.shipping_max) { setErrors({ shipping_max: "Must be ≥ minimum" }); { toast.error("Shipping max must be at least the minimum."); return; } }
     setErrors({});
     setBusy(true);
     const { error } = await supabase.from("site_settings").update(r.data).eq("id", 1);
     setBusy(false);
-    if (error) return toast.error("Couldn't save: " + error.message);
+    if (error) { toast.error("Couldn't save: " + error.message); return; }
     toast.success("Settings saved");
     await qc.invalidateQueries({ queryKey: ["site-settings"] });
   };
@@ -64,9 +64,9 @@ function SettingsPage() {
       <div className="flex items-center justify-between rounded-xl border bg-secondary p-5">
         <div>
           <p className="text-lg font-semibold">Limited-time offer</p>
-          <p className="text-sm text-muted-foreground">{form.offer_active ? "ON. Basic shows the offer price." : "OFF. Basic shows the normal price."}</p>
+          <p className="text-sm text-muted-foreground">{form["offer_active"] ? "ON. Basic shows the offer price." : "OFF. Basic shows the normal price."}</p>
         </div>
-        <Switch aria-label="Limited-time offer" className="scale-150" checked={form.offer_active as boolean}
+        <Switch aria-label="Limited-time offer" className="scale-150" checked={form["offer_active"] as boolean}
           onCheckedChange={(v) => { const f = { ...form, offer_active: v }; setForm(f); void save(f); }} />
       </div>
 
@@ -101,12 +101,12 @@ function ChangePassword() {
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw.length < 8) return toast.error("New password needs at least 8 characters.");
-    if (pw !== pw2) return toast.error("Passwords don't match.");
+    if (pw.length < 8) { toast.error("New password needs at least 8 characters."); return; }
+    if (pw !== pw2) { toast.error("Passwords don't match."); return; }
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password: pw, current_password: cur } as { password: string });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Password changed");
     setCur(""); setPw(""); setPw2("");
   };
