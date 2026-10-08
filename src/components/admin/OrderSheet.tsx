@@ -53,8 +53,8 @@ function SheetBody({ order, onClose }: { order: Order; onClose: () => void }) {
   const [tracking, setTracking] = useState(order.tracking_info ?? "");
   const saveDetails = async () => {
     const fp = finalPrice.trim() === "" ? null : Number(finalPrice);
-    if (fp !== null && (!Number.isFinite(fp) || fp < 0)) return toast.error("Final price must be a positive number.");
-    if (adminNotes.length > 2000 || tracking.length > 300) return toast.error("Text is too long.");
+    if (fp !== null && (!Number.isFinite(fp) || fp < 0)) { toast.error("Final price must be a positive number."); return; }
+    if (adminNotes.length > 2000 || tracking.length > 300) { toast.error("Text is too long."); return; }
     await update({ admin_notes: adminNotes.trim() || null, final_price: fp, advance_paid: advance, tracking_info: tracking.trim() || null }, "Saved");
   };
 
@@ -149,9 +149,9 @@ function uploadWithProgress(path: string, file: File, onProgress: (p: number) =>
     const token = data.session?.access_token;
     if (!token) return reject(new Error("Not signed in"));
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/order-pdfs/${path}`);
+    xhr.open("POST", `${import.meta.env["VITE_SUPABASE_URL"]}/storage/v1/object/order-pdfs/${path}`);
     xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-    xhr.setRequestHeader("apikey", import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+    xhr.setRequestHeader("apikey", String(import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"]));
     xhr.setRequestHeader("Content-Type", "application/pdf");
     xhr.setRequestHeader("x-upsert", "false");
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
@@ -171,9 +171,9 @@ function PdfSection({ order, refresh, onUploaded }: { order: Order; refresh: () 
 
   const handle = async (file: File | undefined) => {
     if (!file) return;
-    if (file.type !== "application/pdf") return toast.error("Only PDF files are allowed.");
-    if (file.size > MAX_BYTES) return toast.error("PDF must be 20 MB or smaller.");
-    if (replaceIdx === null && paths.length >= MAX_PDFS) return toast.error(`Up to ${MAX_PDFS} PDFs per order.`);
+    if (file.type !== "application/pdf") { toast.error("Only PDF files are allowed."); return; }
+    if (file.size > MAX_BYTES) { toast.error("PDF must be 20 MB or smaller."); return; }
+    if (replaceIdx === null && paths.length >= MAX_PDFS) { toast.error(`Up to ${MAX_PDFS} PDFs per order.`); return; }
     const path = `${order.id}/${Date.now()}.pdf`;
     setProgress(0);
     try {
@@ -199,14 +199,14 @@ function PdfSection({ order, refresh, onUploaded }: { order: Order; refresh: () 
   const preview = async (p: string) => {
     const w = window.open("", "_blank");
     const { data, error } = await supabase.storage.from("order-pdfs").createSignedUrl(p, 600);
-    if (error || !data) { w?.close(); return toast.error("Couldn't create preview link."); }
+    if (error || !data) { w?.close(); { toast.error("Couldn't create preview link."); return; } }
     if (w) w.location.href = data.signedUrl; else window.location.href = data.signedUrl;
   };
   const remove = async (i: number) => {
     const p = paths[i]!;
     const next = paths.filter((_, j) => j !== i);
     const { error } = await supabase.from("orders").update({ pdf_paths: next }).eq("id", order.id);
-    if (error) return toast.error("Couldn't remove: " + error.message);
+    if (error) { toast.error("Couldn't remove: " + error.message); return; }
     await supabase.storage.from("order-pdfs").remove([p]);
     toast.success("PDF removed");
     await refresh();
@@ -255,11 +255,11 @@ function DeleteOrder({ order, onDeleted }: { order: Order; onDeleted: () => Prom
     setBusy(true);
     if (order.pdf_paths.length) {
       const { error } = await supabase.storage.from("order-pdfs").remove(order.pdf_paths);
-      if (error) { setBusy(false); return toast.error("Couldn't delete PDFs: " + error.message); }
+      if (error) { setBusy(false); { toast.error("Couldn't delete PDFs: " + error.message); return; } }
     }
     const { error } = await supabase.from("orders").delete().eq("id", order.id);
     setBusy(false);
-    if (error) return toast.error("Couldn't delete: " + error.message);
+    if (error) { toast.error("Couldn't delete: " + error.message); return; }
     toast.success(`Order ${order.order_code} deleted`);
     setOpen(false);
     await onDeleted();
