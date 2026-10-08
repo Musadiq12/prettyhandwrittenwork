@@ -14,16 +14,203 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          admin_notes: string | null
+          advance_paid: boolean
+          city: string
+          covers: number
+          created_at: string
+          deadline: string | null
+          delivery_type: string
+          estimated_total: number
+          final_price: number | null
+          id: string
+          name: string
+          notes: string | null
+          order_code: string
+          pages: number
+          pdf_paths: string[]
+          phone: string
+          pin: string | null
+          state: string
+          status: Database["public"]["Enums"]["order_status"]
+          tracking_info: string | null
+          updated_at: string
+          work_type: string
+          writing_style: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          advance_paid?: boolean
+          city: string
+          covers?: number
+          created_at?: string
+          deadline?: string | null
+          delivery_type: string
+          estimated_total?: number
+          final_price?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          order_code: string
+          pages?: number
+          pdf_paths?: string[]
+          phone: string
+          pin?: string | null
+          state: string
+          status?: Database["public"]["Enums"]["order_status"]
+          tracking_info?: string | null
+          updated_at?: string
+          work_type: string
+          writing_style: string
+        }
+        Update: {
+          admin_notes?: string | null
+          advance_paid?: boolean
+          city?: string
+          covers?: number
+          created_at?: string
+          deadline?: string | null
+          delivery_type?: string
+          estimated_total?: number
+          final_price?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          order_code?: string
+          pages?: number
+          pdf_paths?: string[]
+          phone?: string
+          pin?: string | null
+          state?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          tracking_info?: string | null
+          updated_at?: string
+          work_type?: string
+          writing_style?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          bulk_discount_percent: number
+          bulk_discount_threshold: number
+          id: number
+          offer_active: boolean
+          pdf_addon_per_page: number
+          price_basic: number
+          price_basic_offer: number
+          price_cover: number
+          price_cursive: number
+          price_neat: number
+          price_project_from: number
+          shipping_max: number
+          shipping_min: number
+          updated_at: string
+          upi_id: string
+          whatsapp_number: string
+        }
+        Insert: {
+          bulk_discount_percent?: number
+          bulk_discount_threshold?: number
+          id?: number
+          offer_active?: boolean
+          pdf_addon_per_page?: number
+          price_basic?: number
+          price_basic_offer?: number
+          price_cover?: number
+          price_cursive?: number
+          price_neat?: number
+          price_project_from?: number
+          shipping_max?: number
+          shipping_min?: number
+          updated_at?: string
+          upi_id?: string
+          whatsapp_number?: string
+        }
+        Update: {
+          bulk_discount_percent?: number
+          bulk_discount_threshold?: number
+          id?: number
+          offer_active?: boolean
+          pdf_addon_per_page?: number
+          price_basic?: number
+          price_basic_offer?: number
+          price_cover?: number
+          price_cursive?: number
+          price_neat?: number
+          price_project_from?: number
+          shipping_max?: number
+          shipping_min?: number
+          updated_at?: string
+          upi_id?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_order: {
+        Args: {
+          _city: string
+          _covers: number
+          _deadline: string
+          _delivery: string
+          _name: string
+          _notes: string
+          _pages: number
+          _phone: string
+          _pin: string
+          _state: string
+          _style: string
+          _work_type: string
+        }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      lookup_order_pdfs: {
+        Args: { _code: string; _phone: string }
+        Returns: string[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      order_status:
+        | "new"
+        | "confirmed"
+        | "writing"
+        | "ready"
+        | "dispatched"
+        | "delivered"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +337,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      order_status: [
+        "new",
+        "confirmed",
+        "writing",
+        "ready",
+        "dispatched",
+        "delivered",
+        "cancelled",
+      ],
+    },
   },
 } as const
