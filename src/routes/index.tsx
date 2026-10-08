@@ -216,7 +216,7 @@ function Index() {
   );
 }
 
-function PriceCard({ name, price, unit = "", was, prefix = "" }: { name: string; price: number; unit?: string; was?: number; prefix?: string }) {
+function PriceCard({ name, price, unit = "", was, prefix = "" }: { name: string; price: number; unit?: string; was?: number | undefined; prefix?: string }) {
   return (
     <Card className="relative">
       {was && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Limited-time offer ₹{price}/page</Badge>}
@@ -298,7 +298,7 @@ const schema = z.object({
 });
 type FormValues = z.input<typeof schema>;
 
-function Field({ k, label, children, error }: { k: string; label: string; children: React.ReactNode; error?: string }) {
+function Field({ k, label, children, error }: { k: string; label: string; children: React.ReactNode; error?: string | undefined }) {
   return <div><Label htmlFor={`f-${k}`} className="mb-1 block">{label}</Label>{children}{error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}</div>;
 }
 
@@ -358,6 +358,7 @@ function OrderForm() {
 
 function Samples() {
   const [open, setOpen] = useState<number | null>(null);
+  const current = open !== null ? SAMPLE_IMAGES[open] : undefined;
   return (
     <Section title="Sample work">
       <p className="-mt-5 mb-6 text-center text-sm text-muted-foreground">Sample work (replace with your own)</p>
@@ -370,8 +371,8 @@ function Samples() {
       </div>
       <Dialog open={open !== null} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-w-3xl p-2">
-          <DialogTitle className="sr-only">{open !== null ? SAMPLE_IMAGES[open].alt : "Sample"}</DialogTitle>
-          {open !== null && <img src={SAMPLE_IMAGES[open].src.replace("w=800", "w=1600")} alt={SAMPLE_IMAGES[open].alt} className="w-full rounded-lg" />}
+          <DialogTitle className="sr-only">{current?.alt ?? "Sample"}</DialogTitle>
+          {current && <img src={current.src.replace("w=800", "w=1600")} alt={current.alt} className="w-full rounded-lg" />}
         </DialogContent>
       </Dialog>
     </Section>
