@@ -16,9 +16,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { toast } from "sonner";
+import { BRAND_NAME, SAMPLE_IMAGES, waLinkTo } from "@/config";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  BRAND_NAME, BULK_DISCOUNT, OFFER_ACTIVE, PRICES, SAMPLE_IMAGES, SHIPPING_TEXT, UPI_ID, basicRate, waLink,
-} from "@/config";
+  useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
+  type StyleKey, type DeliveryKey,
+} from "@/lib/settings";
 
 const TITLE = "Pretty Handwritten Work | Handwritten Assignments Delivered Across India";
 const DESC = "Neat, pretty handwritten assignments, records, notes and projects for students — delivered anywhere in India, with optional scanned PDF. Order on WhatsApp.";
@@ -65,14 +69,10 @@ const SERVICES = [
   { icon: Sparkles, name: "Custom Written Work according to your requirements" },
 ];
 
-const STYLES = {
-  basic: { label: "Basic Running", rate: basicRate() },
-  cursive: { label: "Cursive", rate: PRICES.cursive },
-  beautiful: { label: "Beautiful & Neat", rate: PRICES.beautiful },
-} as const;
-type StyleKey = keyof typeof STYLES;
-const DELIVERY = { physical: "Physical Delivery", pdf: "PDF Only", both: "Physical + PDF" } as const;
-type DeliveryKey = keyof typeof DELIVERY;
+function useWa() {
+  const s = useSiteSettings();
+  return (text?: string) => waLinkTo(s.whatsapp_number, text);
+}
 
 const ORDER_MSG = "Hi! I'd like to order handwritten work from Pretty Handwritten Work ✍️";
 
@@ -92,6 +92,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 }
 
 function WaButton({ className = "", children = "Order on WhatsApp" }: { className?: string; children?: React.ReactNode }) {
+  const waLink = useWa();
   return (
     <a href={waLink(ORDER_MSG)} target="_blank" rel="noopener noreferrer"
       className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${className}`}>
@@ -101,6 +102,9 @@ function WaButton({ className = "", children = "Order on WhatsApp" }: { classNam
 }
 
 function Index() {
+  const st = useSiteSettings();
+  const waLink = useWa();
+  const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
     <div className="pb-24 md:pb-0">
       <ImageStreamHero images={HERO_IMAGES}>
@@ -136,11 +140,11 @@ function Index() {
 
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRate()} was={OFFER_ACTIVE ? PRICES.basic : undefined} />
-          <PriceCard name="Cursive Handwriting" unit="/page" price={PRICES.cursive} />
-          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={PRICES.beautiful} />
-          <PriceCard name="File Cover" unit="/cover" price={PRICES.fileCover} />
-          <PriceCard name="Projects" prefix="Starting from " price={PRICES.projectFrom} />
+          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.offer_active ? st.price_basic : undefined} />
+          <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} />
+          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} />
+          <PriceCard name="File Cover" unit="/cover" price={st.price_cover} />
+          <PriceCard name="Projects" prefix="Starting from " price={st.price_project_from} />
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
           Final prices may vary depending on page count, complexity, diagrams, materials, and delivery requirements. Shipping charges are separate.
@@ -151,7 +155,7 @@ function Index() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card><Truck className="mb-3 size-7 text-ink" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical Delivery</h3><p className="mt-2 text-sm">Handwritten pages couriered all over India. {SHIPPING_TEXT}</p></Card>
           <Card><FileText className="mb-3 size-7" aria-hidden /><h3 className="font-hand text-3xl font-bold">PDF Only</h3><p className="mt-2 text-sm">A clear scan sent on WhatsApp or email. Same per-page rate, no shipping.</p></Card>
-          <Card><Layers className="mb-3 size-7" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical + PDF</h3><p className="mt-2 text-sm">Get both the pages and a scan. Scan add-on of ₹{PRICES.scanAddOnPerPage}/page.</p></Card>
+          <Card><Layers className="mb-3 size-7" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical + PDF</h3><p className="mt-2 text-sm">Get both the pages and a scan. Scan add-on of ₹{st.pdf_addon_per_page}/page.</p></Card>
         </div>
       </Section>
 
@@ -187,7 +191,7 @@ function Index() {
             ["Which ink / pen colours can I choose?", "Blue and black are standard. Other colours for headings or highlights are available on request."],
             ["What paper do you use?", "Ruled or plain sheets, A4 or your college's format — or send us your own record book."],
             ["Can you draw diagrams and tables?", "Yes, neat diagrams and tables are possible. Complex diagrams may cost a little extra."],
-            ["How does payment work?", `Pay 50% advance via UPI (${UPI_ID}) after price confirmation, and the rest before dispatch.`],
+            ["How does payment work?", `Pay 50% advance via UPI (${st.upi_id}) after price confirmation, and the rest before dispatch.`],
             ["What if there's a mistake?", "If there's an error on our side, we'll fix and rewrite those pages at no cost."],
             ["Refunds & cancellations?", "Simple and fair: cancel before writing starts for a full refund of your advance. Once writing has started, cancellation isn't possible."],
             ["How long does delivery take?", "Typically 3–7 days across India after dispatch, depending on your location."],
@@ -232,19 +236,20 @@ function PriceCard({ name, price, unit = "", was, prefix = "" }: { name: string;
 const selectCls = "flex h-12 w-full rounded-md border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 function Estimator() {
+  const st = useSiteSettings();
   const [style, setStyle] = useState<StyleKey>("basic");
   const [pages, setPages] = useState(10);
   const [covers, setCovers] = useState(0);
   const [delivery, setDelivery] = useState<DeliveryKey>("physical");
   const calc = useMemo(() => {
     const p = Math.max(0, pages || 0), c = Math.max(0, covers || 0);
-    const writing = p * STYLES[style].rate;
-    const coverCost = c * PRICES.fileCover;
-    const scan = delivery === "both" ? p * PRICES.scanAddOnPerPage : 0;
+    const writing = p * rateFor(st, style);
+    const coverCost = c * st.price_cover;
+    const scan = delivery === "both" ? p * st.pdf_addon_per_page : 0;
     const sub = writing + coverCost + scan;
-    const discount = sub > BULK_DISCOUNT.threshold ? Math.round((sub * BULK_DISCOUNT.percent) / 100) : 0;
+    const discount = sub > st.bulk_discount_threshold ? Math.round((sub * st.bulk_discount_percent) / 100) : 0;
     return { writing, coverCost, scan, discount, total: sub - discount };
-  }, [style, pages, covers, delivery]);
+  }, [style, pages, covers, delivery, st]);
 
   return (
     <Section id="estimate" title="Price estimator" ruled>
@@ -252,7 +257,7 @@ function Estimator() {
         <div className="space-y-4">
           <div><Label htmlFor="e-style">Writing style</Label>
             <select id="e-style" className={selectCls} value={style} onChange={(e) => setStyle(e.target.value as StyleKey)}>
-              {Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v.label} (₹{v.rate}/page)</option>)}
+              {Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v} (₹{rateFor(st, k as StyleKey)}/page)</option>)}
             </select></div>
           <div><Label htmlFor="e-pages">Number of pages</Label><Input id="e-pages" type="number" min={0} className="h-12" value={pages} onChange={(e) => setPages(+e.target.value)} /></div>
           <div><Label htmlFor="e-covers">File covers</Label><Input id="e-covers" type="number" min={0} className="h-12" value={covers} onChange={(e) => setCovers(+e.target.value)} /></div>
@@ -266,13 +271,13 @@ function Estimator() {
             <div className="flex justify-between"><dt>Writing</dt><dd>₹{calc.writing}</dd></div>
             <div className="flex justify-between"><dt>File covers</dt><dd>₹{calc.coverCost}</dd></div>
             {delivery === "both" && <div className="flex justify-between"><dt>Scan add-on</dt><dd>₹{calc.scan}</dd></div>}
-            <div className="flex justify-between"><dt>Bulk discount ({BULK_DISCOUNT.percent}% over ₹{BULK_DISCOUNT.threshold})</dt><dd>−₹{calc.discount}</dd></div>
+            <div className="flex justify-between"><dt>Bulk discount ({st.bulk_discount_percent}% over ₹{st.bulk_discount_threshold})</dt><dd>−₹{calc.discount}</dd></div>
           </dl>
           <div className="mt-4 border-t border-ink/20 pt-4">
             <p className="text-sm">Estimated total</p>
             <p className="font-hand text-5xl font-bold">₹{calc.total}</p>
             <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : "Shipping extra, confirmed on WhatsApp."}</p>
-            <p className="mt-2 text-xs text-muted-foreground">Projects: starting from ₹{PRICES.projectFrom}, chat for a quote.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Projects: starting from ₹{st.price_project_from}, chat for a quote.</p>
           </div>
         </div>
       </Card>
@@ -308,18 +313,33 @@ function OrderForm() {
     defaultValues: { style: "basic", delivery: "physical", pages: 10, covers: 0, work: "" },
   });
   const delivery = watch("delivery");
-  const onSubmit = (raw: FormValues) => {
+  const waLink = useWa();
+  const [saving, setSaving] = useState(false);
+  const onSubmit = async (raw: FormValues) => {
     const d = schema.parse(raw);
+    setSaving(true);
+    const { data: code, error } = await supabase.rpc("create_order", {
+      _name: d.name, _phone: d.phone, _work_type: d.work, _style: d.style, _pages: d.pages, _covers: d.covers,
+      _delivery: d.delivery, _city: d.city, _state: d.state, _pin: d.delivery === "pdf" ? "" : (d.pin ?? ""),
+      _deadline: d.deadline, _notes: d.notes ?? "",
+    });
+    setSaving(false);
+    if (error || !code) {
+      toast.error("Couldn't save your order, but you can still send it on WhatsApp.");
+    } else {
+      toast.success(`Order ${code} saved! Opening WhatsApp…`);
+    }
     const lines = [
       "Hi! New order for Pretty Handwritten Work ✍️", "",
+      code ? `*Order code:* ${code}` : null,
       `*Name:* ${d.name}`, `*WhatsApp:* ${d.phone}`, `*Work type:* ${d.work}`,
-      `*Writing style:* ${STYLES[d.style].label}`, `*Approx. pages:* ${d.pages}`, `*File covers:* ${d.covers}`,
+      `*Writing style:* ${STYLES[d.style]}`, `*Approx. pages:* ${d.pages}`, `*File covers:* ${d.covers}`,
       `*Delivery:* ${DELIVERY[d.delivery]}`, `*City/State:* ${d.city}, ${d.state}`,
       d.delivery !== "pdf" ? `*PIN code:* ${d.pin}` : null,
       `*Deadline:* ${d.deadline}`, d.notes ? `*Notes:* ${d.notes}` : null, "",
       "I'll share reference files in this chat.",
     ].filter((l) => l !== null);
-    window.open(waLink(lines.join("\n")), "_blank", "noopener,noreferrer");
+    window.location.href = waLink(lines.join("\n"));
   };
   const F = (p: { k: keyof FormValues; label: string; children: React.ReactNode }) => Field({ ...p, error: errors[p.k]?.message as string | undefined });
   return (
@@ -332,7 +352,7 @@ function OrderForm() {
             <select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{SERVICES.map((s) => <option key={s.name}>{s.name}</option>)}</select>
           </F>
           <F k="style" label="Writing style">
-            <select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select>
+            <select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
           </F>
           <F k="pages" label="Approx. pages"><Input id="f-pages" type="number" min={1} className="h-12" {...register("pages")} /></F>
           <F k="covers" label="File covers"><Input id="f-covers" type="number" min={0} className="h-12" {...register("covers")} /></F>
