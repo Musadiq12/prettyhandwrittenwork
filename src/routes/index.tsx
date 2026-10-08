@@ -298,6 +298,10 @@ const schema = z.object({
 });
 type FormValues = z.input<typeof schema>;
 
+function Field({ k, label, children, error }: { k: string; label: string; children: React.ReactNode; error?: string }) {
+  return <div><Label htmlFor={`f-${k}`} className="mb-1 block">{label}</Label>{children}{error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}</div>;
+}
+
 function OrderForm() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -317,10 +321,7 @@ function OrderForm() {
     ].filter((l) => l !== null);
     window.open(waLink(lines.join("\n")), "_blank", "noopener,noreferrer");
   };
-  const Err = ({ k }: { k: keyof FormValues }) => errors[k] ? <p role="alert" className="mt-1 text-sm text-destructive">{String(errors[k]?.message)}</p> : null;
-  const F = ({ k, label, children }: { k: keyof FormValues; label: string; children: React.ReactNode }) => (
-    <div><Label htmlFor={`f-${k}`} className="mb-1 block">{label}</Label>{children}<Err k={k} /></div>
-  );
+  const F = (p: { k: keyof FormValues; label: string; children: React.ReactNode }) => Field({ ...p, error: errors[p.k]?.message as string | undefined });
   return (
     <Section id="order" title="Place your order" ruled>
       <Card className="mx-auto max-w-2xl">
