@@ -1,38 +1,34 @@
 // ============================================================
-//  EDIT EVERYTHING HERE — all business values live in this file.
+//  FALLBACK DEFAULTS. Live values are edited in /admin → Settings
+//  and stored in the database. These are used only if loading fails.
 // ============================================================
 
-// 👉 REPLACE with your WhatsApp number: country code + number, digits only (no +, spaces or dashes).
-//    Example: "919876543210"
+// 👉 REPLACE with your WhatsApp number (also set it in /admin → Settings).
+//    Country code + number, digits only. Example: "919876543210"
 export const WHATSAPP_NUMBER = "91XXXXXXXXXX";
 
-// 👉 REPLACE with your UPI ID (shown in FAQ / payment info). Example: "yourname@okaxis"
+// 👉 REPLACE with your UPI ID (also set it in /admin → Settings).
 export const UPI_ID = "yourname@upi";
 
 export const BRAND_NAME = "Pretty Handwritten Work";
 
-// Limited-time offer on Basic handwriting. Set to false to show normal price.
-export const OFFER_ACTIVE = true;
-
-export const PRICES = {
-  basic: 10, // ₹ per page (regular)
-  basicOffer: 8, // ₹ per page while OFFER_ACTIVE
-  cursive: 20, // ₹ per page
-  beautiful: 20, // ₹ per page
-  fileCover: 60, // ₹ per cover
-  projectFrom: 350, // ₹ starting price
-  scanAddOnPerPage: 1, // ₹ per page for Physical + PDF
+export const DEFAULT_SETTINGS = {
+  whatsapp_number: WHATSAPP_NUMBER,
+  upi_id: UPI_ID,
+  offer_active: true,
+  price_basic: 8,
+  price_basic_offer: 6,
+  price_cursive: 15,
+  price_neat: 15,
+  price_cover: 40,
+  price_project_from: 250,
+  pdf_addon_per_page: 1,
+  shipping_min: 50,
+  shipping_max: 100,
+  bulk_discount_percent: 5,
+  bulk_discount_threshold: 1500,
 };
-
-export const BULK_DISCOUNT = {
-  threshold: 1500, // ₹ — discount applies when estimate exceeds this
-  percent: 5,
-};
-
-export const SHIPPING_TEXT =
-  "Shipping is charged separately — usually ₹60–₹120 depending on weight and location, confirmed on WhatsApp.";
-
-export const basicRate = () => (OFFER_ACTIVE ? PRICES.basicOffer : PRICES.basic);
+export type SiteSettings = typeof DEFAULT_SETTINGS;
 
 // 👉 REPLACE these sample images with photos of your own work.
 export const SAMPLE_IMAGES = [
@@ -44,5 +40,5 @@ export const SAMPLE_IMAGES = [
   { src: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800&q=80&auto=format", alt: "Neat planner pages" },
 ];
 
-export const waLink = (text?: string) =>
-  `https://wa.me/${WHATSAPP_NUMBER}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+export const waLinkTo = (number: string, text?: string) =>
+  `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
