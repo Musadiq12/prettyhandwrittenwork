@@ -12,6 +12,13 @@
     {
       "idx": 1,
       "version": "7",
+      "when": 1791504000000,
+      "tag": "0001_pdf_lookup_rate_limit",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
       "when": 1791504100000,
       "tag": "0002_order_code_entropy",
       "breakpoints": true
