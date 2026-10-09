@@ -45,6 +45,28 @@ $$;
 REVOKE ALL ON FUNCTION public.consume_pdf_lookup_rate_limit(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.consume_pdf_lookup_rate_limit(text) TO service_role;
 
+-- Limit role checks to the caller's own user ID; otherwise authenticated callers
+-- could enumerate which user IDs have the admin role through this SECURITY DEFINER RPC.
+CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $
+  SELECT CASE
+    WHEN _user_id IS DISTINCT FROM auth.uid() THEN false
+    ELSE EXISTS (
+      SELECT 1
+      FROM public.user_roles
+      WHERE user_id = _user_id AND role = _role
+    )
+  END
+$;
+
+REVOKE ALL ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated, service_role;
+
 -- Prevent direct anonymous RPC calls that would bypass the server-side limiter.
 REVOKE ALL ON FUNCTION public.lookup_order_pdfs(text, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.lookup_order_pdfs(text, text) TO service_role;
