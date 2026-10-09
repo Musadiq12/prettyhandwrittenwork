@@ -196,6 +196,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      consume_pdf_lookup_rate_limit: {
+        Args: { _key_hash: string }
+        Returns: boolean
+      }
       lookup_order_pdfs: {
         Args: { _code: string; _phone: string }
         Returns: string[]
