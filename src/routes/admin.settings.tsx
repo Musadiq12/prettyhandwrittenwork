@@ -87,7 +87,13 @@ function SettingsPage() {
           <p className="text-sm text-muted-foreground">{form["offer_active"] ? "ON. Basic shows the offer price." : "OFF. Basic shows the normal price."}</p>
         </div>
         <Switch aria-label="Limited-time offer" className="scale-150" checked={form["offer_active"] as boolean}
-          onCheckedChange={(v) => { const f = { ...form, offer_active: v }; setForm(f); void save(f); }} />
+          onCheckedChange={async (v) => {
+            setForm({ ...form, offer_active: v });
+            const { data: rows, error } = await supabase.from("site_settings").update({ offer_active: v }).eq("id", 1).select("offer_active");
+            if (error || !rows?.length) { setForm((p) => p && { ...p, offer_active: !v }); toast.error("Couldn't change the offer. " + (error?.message ?? "Please log in again.")); return; }
+            toast.success(v ? "Offer turned ON" : "Offer turned OFF");
+            await qc.invalidateQueries({ queryKey: ["site-settings"] });
+          }} />
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); void save(); }} className="space-y-5">
