@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 const input = z.object({
   code: z.string().trim().min(4).max(20),
-  phone: z.string().trim().regex(/^[6-9]\\d{9}$/),
+  phone: z.string().trim().regex(/^[6-9]\d{9}$/),
 });
 
 async function hashClientIp(): Promise<string> {
