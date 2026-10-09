@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  dependency-audit:
+    name: Dependency audit
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -27,6 +28,21 @@ jobs:
       - name: Audit dependencies
         run: bun audit
 
+  quality:
+    name: Lint, test, and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
       - name: Lint
         run: bun run lint
 
@@ -35,3 +51,11 @@ jobs:
 
       - name: Production build
         run: bun run build
+        env:
+          # Non-secret placeholders let CI compile without exposing production configuration.
+          VITE_SUPABASE_PROJECT_ID: ci-placeholder
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+          SUPABASE_PROJECT_ID: ci-placeholder
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
