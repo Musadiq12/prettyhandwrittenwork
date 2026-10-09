@@ -127,19 +127,46 @@ function ChangePassword() {
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!cur) { toast.error("Enter your current password."); return; }
     if (pw.length < 8) { toast.error("New password needs at least 8 characters."); return; }
     if (pw !== pw2) { toast.error("Passwords don't match."); return; }
+
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password: pw, current_password: cur } as { password: string });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Password changed");
-    setCur(""); setPw(""); setPw2("");
+    try {
+      const { data, error: userError } = await supabase.auth.getUser();
+      if (userError || !data.user?.email) {
+        toast.error("Couldn't verify the signed-in account. Please log in again.");
+        return;
+      }
+
+      // Supabase updateUser does not validate a current_password property.
+      // Reauthenticate explicitly before changing the password.
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: data.user.email,
+        password: cur,
+      });
+      if (reauthError) {
+        toast.error("Current password is incorrect.");
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: pw });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Password changed");
+      setCur(""); setPw(""); setPw2("");
+    } catch {
+      toast.error("Couldn't change the password. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <form onSubmit={submit} className="space-y-3 rounded-xl border bg-card p-4">
       <h2 className="font-semibold">Change password</h2>
-      <div><Label htmlFor="cpw">Current password</Label><Input id="cpw" type="password" autoComplete="current-password" className="h-11" value={cur} onChange={(e) => setCur(e.target.value)} /></div>
+      <div><Label htmlFor="cpw">Current password</Label><Input id="cpw" type="password" autoComplete="current-password" required className="h-11" value={cur} onChange={(e) => setCur(e.target.value)} /></div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div><Label htmlFor="npw">New password</Label><Input id="npw" type="password" autoComplete="new-password" className="h-11" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
         <div><Label htmlFor="npw2">Confirm new password</Label><Input id="npw2" type="password" autoComplete="new-password" className="h-11" value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>
