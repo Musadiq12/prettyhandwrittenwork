@@ -15,9 +15,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/admin/settings")({ component: SettingsPage });
 
 const pos = z.coerce.number().min(0, "Must be 0 or more").max(1_000_000);
+// Accept "98765 43210", "+91 98765-43210", "09876543210", "919876543210" and normalise to 91XXXXXXXXXX
+const normalisePhone = (v: unknown) => {
+  let d = String(v ?? "").replace(/\D/g, "");
+  if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  if (d.length === 10) d = "91" + d;
+  return d;
+};
 const schema = z.object({
-  whatsapp_number: z.string().trim().regex(/^91[6-9]\d{9}$/, "Use 91 + your 10-digit number, e.g. 919876543210"),
-  upi_id: z.string().trim().regex(/^[\w.\-]{2,}@[\w.\-]{2,}$/, "Enter a valid UPI ID, e.g. name@okaxis"),
+  whatsapp_number: z.preprocess(normalisePhone, z.string().regex(/^91\d{10}$/, "Enter your 10-digit WhatsApp number, e.g. 9876543210")),
+  upi_id: z.preprocess((v) => String(v ?? "").trim().replace(/\s+/g, ""), z.string().regex(/^[\w.\-]+@[\w.\-]+$/, "Enter a valid UPI ID, e.g. name@okaxis").refine((v) => v !== "yourname@upi", "Enter your real UPI ID")),
   offer_active: z.boolean(),
   price_basic: pos, price_basic_offer: pos, price_cursive: pos, price_neat: pos, price_cover: pos,
   price_project_from: pos, pdf_addon_per_page: pos, shipping_min: pos, shipping_max: pos,
@@ -39,7 +46,7 @@ function SettingsPage() {
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (data && !form) setForm(Object.fromEntries(Object.entries(data).map(([k, v]) => [k, typeof v === "boolean" ? v : String(v)]))); }, [data, form]);
 
-  const save = async (override?: Record<string, string | boolean>) => {
+  const save = async (override?: Record<string, string | boolean>): Promise<boolean> => {
     const f = override ?? form!;
     const r = schema.safeParse(f);
     if (!r.success) {
@@ -51,17 +58,22 @@ function SettingsPage() {
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
         el?.focus({ preventScroll: true });
       });
-      toast.error("Please fix the highlighted fields.");
-      return;
+      toast.error("Not saved: " + (r.error.issues[0]?.message ?? "please fix the highlighted fields."));
+      return false;
     }
-    if (r.data.shipping_min > r.data.shipping_max) { setErrors({ shipping_max: "Must be ≥ minimum" }); { toast.error("Shipping max must be at least the minimum."); return; } }
+    if (r.data.shipping_min > r.data.shipping_max) { setErrors({ shipping_max: "Must be ≥ minimum" }); toast.error("Shipping max must be at least the minimum."); return false; }
     setErrors({});
     setBusy(true);
-    const { error } = await supabase.from("site_settings").update(r.data).eq("id", 1);
+    const { data: rows, error } = await supabase.from("site_settings").update(r.data).eq("id", 1).select();
     setBusy(false);
-    if (error) { toast.error("Couldn't save: " + error.message); return; }
+    if (error) { toast.error("Couldn't save: " + error.message); return false; }
+    if (!rows?.length) { toast.error("Couldn't save: your account doesn't have permission. Please log out and in again."); return false; }
+    const saved = rows[0]!;
+    setForm(Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, typeof v === "boolean" ? v : String(v)])));
+    qc.setQueryData(["site-settings"], saved);
     toast.success("Settings saved");
     await qc.invalidateQueries({ queryKey: ["site-settings"] });
+    return true;
   };
 
   if (isLoading || !form) return <div className="space-y-3"><Skeleton className="h-10 w-40" /><Skeleton className="h-24" /><Skeleton className="h-64" /></div>;
