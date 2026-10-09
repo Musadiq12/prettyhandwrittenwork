@@ -43,8 +43,16 @@ function SettingsPage() {
     const f = override ?? form!;
     const r = schema.safeParse(f);
     if (!r.success) {
-      setErrors(Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message])));
-      { toast.error("Please fix the highlighted fields."); return; }
+      const errs = Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message]));
+      setErrors(errs);
+      const firstKey = String(r.error.issues[0]?.path[0] ?? "");
+      requestAnimationFrame(() => {
+        const el = document.getElementById(firstKey);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        el?.focus({ preventScroll: true });
+      });
+      toast.error("Please fix the highlighted fields.");
+      return;
     }
     if (r.data.shipping_min > r.data.shipping_max) { setErrors({ shipping_max: "Must be ≥ minimum" }); { toast.error("Shipping max must be at least the minimum."); return; } }
     setErrors({});
