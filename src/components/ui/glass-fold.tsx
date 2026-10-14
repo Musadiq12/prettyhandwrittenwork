@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef } from "react";
 
 export interface GlassFoldProps {
   /** The body of each glass pane. */
-  color1?: string
+  color1?: string;
   /** The background. */
-  color2?: string
+  color2?: string;
   /** The lit edges. */
-  color3?: string
+  color3?: string;
   /** Animation speed. 0 freezes it. */
-  speed?: number
+  speed?: number;
   /** How tightly the folds are packed. Higher is more, smaller folds. */
-  scale?: number
+  scale?: number;
   /** Film grain, 0 to 0.5. */
-  noise?: number
-  className?: string
+  noise?: number;
+  className?: string;
 }
 
 const VERTEX = `
@@ -25,7 +25,7 @@ const VERTEX = `
     vUv = position * 0.5 + 0.5;
     gl_Position = vec4(position, 0.0, 1.0);
   }
-`
+`;
 
 const FRAGMENT = `
   precision highp float;
@@ -97,26 +97,32 @@ const FRAGMENT = `
     }
     gl_FragColor = vec4(color, 1.0);
   }
-`
+`;
 
 function hexToVec3(hex: string): [number, number, number] {
-  const h = hex.replace("#", "")
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h
-  const n = Number.parseInt(full, 16)
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
+  const h = hex.replace("#", "");
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
+  const n = Number.parseInt(full, 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader {
-  const shader = gl.createShader(type)
-  if (!shader) throw new Error("Unable to create WebGL shader")
-  gl.shaderSource(shader, source)
-  gl.compileShader(shader)
+  const shader = gl.createShader(type);
+  if (!shader) throw new Error("Unable to create WebGL shader");
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    const message = gl.getShaderInfoLog(shader) ?? "Unknown shader compilation error"
-    gl.deleteShader(shader)
-    throw new Error(message)
+    const message = gl.getShaderInfoLog(shader) ?? "Unknown shader compilation error";
+    gl.deleteShader(shader);
+    throw new Error(message);
   }
-  return shader
+  return shader;
 }
 
 export function GlassFold({
@@ -128,48 +134,48 @@ export function GlassFold({
   noise = 0.12,
   className,
 }: GlassFoldProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const props = useRef({ color1, color2, color3, speed, scale, noise })
-  props.current = { color1, color2, color3, speed, scale, noise }
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const props = useRef({ color1, color2, color3, speed, scale, noise });
+  props.current = { color1, color2, color3, speed, scale, noise };
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const gl = canvas.getContext("webgl", { antialias: false, alpha: false })
-    if (!gl) return
+    const gl = canvas.getContext("webgl", { antialias: false, alpha: false });
+    if (!gl) return;
 
-    let program: WebGLProgram | null = null
-    let buffer: WebGLBuffer | null = null
-    let vertexShader: WebGLShader | null = null
-    let fragmentShader: WebGLShader | null = null
+    let program: WebGLProgram | null = null;
+    let buffer: WebGLBuffer | null = null;
+    let vertexShader: WebGLShader | null = null;
+    let fragmentShader: WebGLShader | null = null;
 
     try {
-      vertexShader = compile(gl, gl.VERTEX_SHADER, VERTEX)
-      fragmentShader = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT)
-      program = gl.createProgram()
-      if (!program) throw new Error("Unable to create WebGL program")
-      gl.attachShader(program, vertexShader)
-      gl.attachShader(program, fragmentShader)
-      gl.linkProgram(program)
+      vertexShader = compile(gl, gl.VERTEX_SHADER, VERTEX);
+      fragmentShader = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
+      program = gl.createProgram();
+      if (!program) throw new Error("Unable to create WebGL program");
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        throw new Error(gl.getProgramInfoLog(program) ?? "Unable to link WebGL program")
+        throw new Error(gl.getProgramInfoLog(program) ?? "Unable to link WebGL program");
       }
-      gl.useProgram(program)
+      gl.useProgram(program);
 
-      buffer = gl.createBuffer()
-      if (!buffer) throw new Error("Unable to create WebGL buffer")
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+      buffer = gl.createBuffer();
+      if (!buffer) throw new Error("Unable to create WebGL buffer");
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
-        gl.STATIC_DRAW
-      )
-      const position = gl.getAttribLocation(program, "position")
-      gl.enableVertexAttribArray(position)
-      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0)
+        gl.STATIC_DRAW,
+      );
+      const position = gl.getAttribLocation(program, "position");
+      gl.enableVertexAttribArray(position);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
 
-      const uniform = (name: string) => gl.getUniformLocation(program, name)
+      const uniform = (name: string) => gl.getUniformLocation(program, name);
       const u = {
         time: uniform("u_time"),
         color1: uniform("u_color1"),
@@ -178,66 +184,66 @@ export function GlassFold({
         scale: uniform("u_scale"),
         noise: uniform("u_noise"),
         resolution: uniform("u_resolution"),
-      }
+      };
 
       const resize = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2)
-        const width = Math.max(1, Math.round(canvas.clientWidth * dpr))
-        const height = Math.max(1, Math.round(canvas.clientHeight * dpr))
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
+        const height = Math.max(1, Math.round(canvas.clientHeight * dpr));
         if (canvas.width !== width || canvas.height !== height) {
-          canvas.width = width
-          canvas.height = height
+          canvas.width = width;
+          canvas.height = height;
         }
-        gl.viewport(0, 0, width, height)
-      }
+        gl.viewport(0, 0, width, height);
+      };
 
-      let elapsed = 0
-      let last: number | null = null
-      let frame = 0
+      let elapsed = 0;
+      let last: number | null = null;
+      let frame = 0;
       const draw = (now: number) => {
-        const p = props.current
-        if (last !== null) elapsed += Math.min((now - last) / 1000, 0.1) * p.speed
-        last = now
+        const p = props.current;
+        if (last !== null) elapsed += Math.min((now - last) / 1000, 0.1) * p.speed;
+        last = now;
 
-        resize()
-        gl.uniform1f(u.time, elapsed)
-        gl.uniform3fv(u.color1, hexToVec3(p.color1))
-        gl.uniform3fv(u.color2, hexToVec3(p.color2))
-        gl.uniform3fv(u.color3, hexToVec3(p.color3))
-        gl.uniform1f(u.scale, p.scale)
-        gl.uniform1f(u.noise, p.noise)
-        gl.uniform2f(u.resolution, canvas.width, canvas.height)
-        gl.drawArrays(gl.TRIANGLES, 0, 6)
-      }
+        resize();
+        gl.uniform1f(u.time, elapsed);
+        gl.uniform3fv(u.color1, hexToVec3(p.color1));
+        gl.uniform3fv(u.color2, hexToVec3(p.color2));
+        gl.uniform3fv(u.color3, hexToVec3(p.color3));
+        gl.uniform1f(u.scale, p.scale);
+        gl.uniform1f(u.noise, p.noise);
+        gl.uniform2f(u.resolution, canvas.width, canvas.height);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      };
 
-      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const loop = (now: number) => {
-        draw(now)
-        if (!still) frame = window.requestAnimationFrame(loop)
-      }
-      frame = window.requestAnimationFrame(loop)
+        draw(now);
+        if (!still) frame = window.requestAnimationFrame(loop);
+      };
+      frame = window.requestAnimationFrame(loop);
 
       const observer = new ResizeObserver(() => {
-        if (still) draw(performance.now())
-      })
-      observer.observe(canvas)
+        if (still) draw(performance.now());
+      });
+      observer.observe(canvas);
 
       return () => {
-        window.cancelAnimationFrame(frame)
-        observer.disconnect()
-        if (buffer) gl.deleteBuffer(buffer)
-        if (program) gl.deleteProgram(program)
-        if (vertexShader) gl.deleteShader(vertexShader)
-        if (fragmentShader) gl.deleteShader(fragmentShader)
-      }
+        window.cancelAnimationFrame(frame);
+        observer.disconnect();
+        if (buffer) gl.deleteBuffer(buffer);
+        if (program) gl.deleteProgram(program);
+        if (vertexShader) gl.deleteShader(vertexShader);
+        if (fragmentShader) gl.deleteShader(fragmentShader);
+      };
     } catch {
-      if (buffer) gl.deleteBuffer(buffer)
-      if (program) gl.deleteProgram(program)
-      if (vertexShader) gl.deleteShader(vertexShader)
-      if (fragmentShader) gl.deleteShader(fragmentShader)
-      return
+      if (buffer) gl.deleteBuffer(buffer);
+      if (program) gl.deleteProgram(program);
+      if (vertexShader) gl.deleteShader(vertexShader);
+      if (fragmentShader) gl.deleteShader(fragmentShader);
+      return;
     }
-  }, [])
+  }, []);
 
   return (
     <canvas
@@ -246,5 +252,5 @@ export function GlassFold({
       className={className}
       style={{ display: "block", width: "100%", height: "100%" }}
     />
-  )
+  );
 }

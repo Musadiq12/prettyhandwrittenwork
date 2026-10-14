@@ -1,4 +1,4 @@
-import { GlassFold } from "@/components/ui/glass-fold"
+import { GlassFold } from "@/components/ui/glass-fold";
 
 const settings = {
   color1: "#1e3cc8",
@@ -7,10 +7,10 @@ const settings = {
   speed: 0.5,
   scale: 1,
   noise: 0.12,
-}
+};
 
 export default function GlassFoldDemo(props: Partial<typeof settings>) {
-  const config = { ...settings, ...props }
+  const config = { ...settings, ...props };
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black">
@@ -32,5 +32,5 @@ export default function GlassFoldDemo(props: Partial<typeof settings>) {
         </a>
       </div>
     </div>
-  )
+  );
 }
