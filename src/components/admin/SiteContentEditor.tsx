@@ -71,12 +71,24 @@ export function SiteContentEditor() {
       toast.error("Offer end date must be a valid date/time.");
       return;
     }
-    if (form.heroImages.length > 6) {
-      toast.error("Use up to 6 hero images to keep the homepage fast.");
+    if (form.heroImages.length !== 6) {
+      toast.error("Keep exactly 6 hero images to preserve the homepage marquee layout.");
+      return;
+    }
+    if (new Set(form.heroImages.map((x) => x.src.trim())).size !== form.heroImages.length) {
+      toast.error("Each hero image must use a unique URL.");
       return;
     }
     if (form.heroImages.some((x) => !x.src.trim() || !x.alt.trim())) {
       toast.error("Every hero image needs both a URL and descriptive alt text.");
+      return;
+    }
+    if (form.services.some((x) => !x.name.trim())) {
+      toast.error("Every service needs a name.");
+      return;
+    }
+    if (form.gallerySamples.some((x) => !x.src.trim() || !x.style.trim() || !x.pageType.trim())) {
+      toast.error("Each gallery sample needs an image URL, style and page type.");
       return;
     }
     if (form.faqItems.some((x) => !x.question.trim() || !x.answer.trim())) {
