@@ -1,0 +1,64 @@
+name: Apply database migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Choose preview first; choose apply only after reviewing the preview"
+        required: true
+        type: choice
+        options:
+          - preview
+          - apply
+        default: preview
+      confirm:
+        description: "For apply only, type APPLY (leave blank for preview)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    if: ${{ inputs.operation == 'preview' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Preview pending migrations
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${SUPABASE_DB_URL:-}" ]]; then
+            echo "::error::Add the SUPABASE_DB_URL repository Actions secret before running this workflow."
+            exit 1
+          fi
+          supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+
+  apply:
+    if: ${{ inputs.operation == 'apply' && inputs.confirm == 'APPLY' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Verify and apply pending migrations
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${SUPABASE_DB_URL:-}" ]]; then
+            echo "::error::Add the SUPABASE_DB_URL repository Actions secret before running this workflow."
+            exit 1
+          fi
+          supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+          supabase db push --db-url "$SUPABASE_DB_URL"
