@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,10 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { BRAND_NAME, SAMPLE_IMAGES, waLinkTo } from "@/config";
+import { BRAND_NAME, FAQ_ITEMS, OFFER_END_DATE, SAMPLE_CAPTIONS, TESTIMONIALS, waLinkTo } from "@/config";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
@@ -36,7 +36,16 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://prettyhandwrittenwork.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://prettyhandwrittenwork.lovable.app/" }],
+    scripts: [{ type: "application/ld+json", children: JSON.stringify({
+      "@context": "https://schema.org", "@graph": [
+        { "@type": "LocalBusiness", "@id": "https://prettyhandwrittenwork.lovable.app/#business", name: BRAND_NAME,
+          url: "https://prettyhandwrittenwork.lovable.app/", description: DESC, areaServed: { "@type": "Country", name: "India" } },
+        { "@type": "FAQPage", mainEntity: FAQ_ITEMS.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
+      ],
+    }) }],
   }),
   component: Index,
 });
@@ -49,13 +58,28 @@ const HERO_IMAGES = [
   { src: u("photo-1503676260728-1c00da094a0b"), alt: "Student studying with books" },
   { src: u("photo-1434030216411-0b793f4b4173"), alt: "Hand writing on lined paper" },
   { src: u("photo-1488190211105-8b0e65b80b4e"), alt: "Writing notes at a desk" },
-  { src: u("photo-1471107340929-a87cd0f5b5f3"), alt: "Journal with handwriting" },
-  { src: u("photo-1513475382585-d06e58bcb0e0"), alt: "Study desk with notebooks" },
-  { src: u("photo-1452421822248-d4c2b47f0c81"), alt: "Notebook with pencil" },
-  { src: u("photo-1501504905252-473c47e087f8"), alt: "Study table with coffee and notes" },
-  { src: u("photo-1544716278-ca5e3f4abd8c"), alt: "Stack of books" },
-  { src: u("photo-1506784983877-45594efa4cbe"), alt: "Neatly written planner" },
 ];
+
+const samplePaths = Object.keys(import.meta.glob("/public/samples/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}")).sort();
+const sampleImages = samplePaths.map((path) => {
+  const filename = path.split("/").at(-1) ?? "";
+  const [style = "Handwriting", pageType = "Assignment page"] = filename.replace(/\.[^.]+$/, "").split("--").map((part) => part.replace(/[-_]/g, " "));
+  const caption = SAMPLE_CAPTIONS[filename] ?? { style, pageType };
+  return { src: path.replace(/^\/public/, ""), alt: `${caption.style} — ${caption.pageType}`, ...caption };
+});
+
+function useLimitedOffer() {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    if (!OFFER_END_DATE) return;
+    const end = Date.parse(OFFER_END_DATE);
+    const update = () => setActive(Number.isFinite(end) && end > Date.now());
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return active;
+}
 
 const SERVICES = [
   { icon: BookOpen, name: "School Assignments" },
@@ -104,13 +128,14 @@ function WaButton({ className = "", children = "Order on WhatsApp" }: { classNam
 function Index() {
   const st = useSiteSettings();
   const waLink = useWa();
+  const limitedOffer = useLimitedOffer();
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
-    <div className="pb-24 md:pb-0">
+    <div>
       <ImageStreamHero images={HERO_IMAGES}>
         <div className="fade-up max-w-xl rounded-3xl bg-background/60 p-6 text-center backdrop-blur-sm md:p-8">
           <p className="font-hand text-2xl text-muted-foreground">{BRAND_NAME} ✍️📚</p>
-          <h1 className="mt-1 font-hand text-5xl font-bold leading-tight md:text-6xl">Neat. Pretty. Handwritten for you.</h1>
+          <h1 className="mt-1 font-hand text-5xl font-bold leading-tight md:text-6xl">Pretty handwritten assignments in India</h1>
           <p className="mt-3 text-sm font-medium md:text-base">Neat Handwriting • Affordable Prices • Made with Care</p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <WaButton />
@@ -127,7 +152,7 @@ function Index() {
         </p>
       </Section>
 
-      <Section title="Our services">
+      <Section title="Handwritten assignments in India — our services">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
           {SERVICES.map(({ icon: Icon, name }) => (
             <Card key={name} className="flex flex-col items-center gap-3 text-center">
@@ -140,7 +165,7 @@ function Index() {
 
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.offer_active ? st.price_basic : undefined} />
+          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.offer_active ? st.price_basic : undefined} limitedOffer={st.offer_active && limitedOffer} />
           <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} />
           <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} />
           <PriceCard name="File Cover" unit="/cover" price={st.price_cover} />
@@ -172,6 +197,19 @@ function Index() {
       <OrderForm />
       <Samples />
 
+      <Section title="Testimonials">
+        <div className="grid gap-4 md:grid-cols-3">
+          {TESTIMONIALS.map((item, i) => (
+            <Card key={i}>
+              <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>
+              <blockquote className="text-sm leading-6">“{item.quote}”</blockquote>
+              <p className="mt-4 font-semibold">{item.name}</p>
+              <p className="text-sm text-muted-foreground">{item.education}</p>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
       <Section title="Why choose us">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {[
@@ -185,17 +223,8 @@ function Index() {
       </Section>
 
       <Section title="FAQ" ruled>
-        <Accordion type="single" collapsible className="mx-auto max-w-2xl rounded-2xl border bg-card px-5 shadow-paper">
-          {[
-            ["How long does it take?", "Turnaround depends on page count. Tell us your deadline and we'll confirm on WhatsApp."],
-            ["Which ink / pen colours can I choose?", "Blue and black are standard. Other colours for headings or highlights are available on request."],
-            ["What paper do you use?", "Ruled or plain sheets, A4 or your college's format — or send us your own record book."],
-            ["Can you draw diagrams and tables?", "Yes, neat diagrams and tables are possible. Complex diagrams may cost a little extra."],
-            ["How does payment work?", `Pay 50% advance via UPI (${st.upi_id}) after price confirmation, and the rest before dispatch.`],
-            ["What if there's a mistake?", "If there's an error on our side, we'll fix and rewrite those pages at no cost."],
-            ["Refunds & cancellations?", "Simple and fair: cancel before writing starts for a full refund of your advance. Once writing has started, cancellation isn't possible."],
-            ["How long does delivery take?", "Typically 3–7 days across India after dispatch, depending on your location."],
-          ].map(([q, a], i) => (
+        <Accordion type="single" collapsible defaultValue="q0" className="mx-auto max-w-2xl rounded-2xl border bg-card px-5 shadow-paper">
+          {FAQ_ITEMS.map(([q, a], i) => (
             <AccordionItem key={q} value={`q${i}`}>
               <AccordionTrigger className="text-left">{q}</AccordionTrigger>
               <AccordionContent>{a}</AccordionContent>
@@ -211,19 +240,18 @@ function Index() {
         <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">We provide handwriting and copying services only for content you submit yourself.</p>
       </footer>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 p-3 backdrop-blur md:hidden"><WaButton className="w-full" /></div>
       <a href={waLink(ORDER_MSG)} target="_blank" rel="noopener noreferrer" aria-label="Order on WhatsApp"
-        className="fixed bottom-6 right-6 z-40 hidden size-16 place-items-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-paper transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:grid">
+        className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-40 grid size-16 place-items-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-paper transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <MessageCircle className="size-8" aria-hidden />
       </a>
     </div>
   );
 }
 
-function PriceCard({ name, price, unit = "", was, prefix = "" }: { name: string; price: number; unit?: string; was?: number | undefined; prefix?: string }) {
+function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = false }: { name: string; price: number; unit?: string; was?: number | undefined; prefix?: string; limitedOffer?: boolean }) {
   return (
     <Card className="relative">
-      {was && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Limited-time offer ₹{price}/page</Badge>}
+      {limitedOffer && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Limited-time offer ₹{price}/page</Badge>}
       <h3 className="font-hand text-2xl font-bold">{name}</h3>
       <p className="mt-2 text-3xl font-semibold">
         {was && <s className="mr-2 text-lg text-muted-foreground">₹{was}</s>}
@@ -270,7 +298,7 @@ function Estimator() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between"><dt>Writing</dt><dd>₹{calc.writing}</dd></div>
             <div className="flex justify-between"><dt>File covers</dt><dd>₹{calc.coverCost}</dd></div>
-            {delivery === "both" && <div className="flex justify-between"><dt>Scan add-on</dt><dd>₹{calc.scan}</dd></div>}
+            {delivery === "both" && <div className="flex justify-between gap-3"><dt>Scan add-on (₹{st.pdf_addon_per_page}/page)</dt><dd>₹{calc.scan}</dd></div>}
             <div className="flex justify-between"><dt>Bulk discount ({st.bulk_discount_percent}% over ₹{st.bulk_discount_threshold})</dt><dd>−₹{calc.discount}</dd></div>
           </dl>
           <div className="mt-4 border-t border-ink/20 pt-4">
@@ -288,17 +316,19 @@ function Estimator() {
 const schema = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(80),
   phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
-  work: z.string().min(1, "Choose a work type"),
+  work: z.string().min(1, "Choose a work type").max(100),
   style: z.enum(["basic", "cursive", "beautiful"]),
   pages: z.coerce.number().int().min(1, "At least 1 page").max(2000),
   covers: z.coerce.number().int().min(0).max(100),
   delivery: z.enum(["physical", "pdf", "both"]),
-  city: z.string().trim().min(2, "Enter your city").max(60),
-  state: z.string().trim().min(2, "Enter your state").max(60),
-  pin: z.string().trim().optional(),
+  city: z.string().trim().max(60).default(""),
+  state: z.string().trim().max(60).default(""),
+  pin: z.string().trim().max(6).optional(),
   deadline: z.string().min(1, "Pick a deadline"),
   notes: z.string().max(1000).optional(),
 }).superRefine((d, ctx) => {
+  if (d.delivery !== "pdf" && d.city.length < 2) ctx.addIssue({ code: "custom", path: ["city"], message: "Enter your city" });
+  if (d.delivery !== "pdf" && d.state.length < 2) ctx.addIssue({ code: "custom", path: ["state"], message: "Enter your state" });
   if (d.delivery !== "pdf" && !/^[1-9]\d{5}$/.test(d.pin ?? "")) ctx.addIssue({ code: "custom", path: ["pin"], message: "Enter a valid 6-digit PIN code" });
 });
 type FormValues = z.input<typeof schema>;
@@ -310,7 +340,7 @@ function Field({ k, label, children, error }: { k: string; label: string; childr
 function OrderForm() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { style: "basic", delivery: "physical", pages: 10, covers: 0, work: "" },
+    defaultValues: { style: "basic", delivery: "physical", pages: 10, covers: 0, work: "", city: "", state: "", pin: "" },
   });
   const delivery = watch("delivery");
   const waLink = useWa();
@@ -320,7 +350,7 @@ function OrderForm() {
     setSaving(true);
     const { data: code, error } = await supabase.rpc("create_order", {
       _name: d.name, _phone: d.phone, _work_type: d.work, _style: d.style, _pages: d.pages, _covers: d.covers,
-      _delivery: d.delivery, _city: d.city, _state: d.state, _pin: d.delivery === "pdf" ? "" : (d.pin ?? ""),
+      _delivery: d.delivery, _city: d.delivery === "pdf" ? "" : d.city, _state: d.delivery === "pdf" ? "" : d.state, _pin: d.delivery === "pdf" ? "" : (d.pin ?? ""),
       _deadline: d.deadline, _notes: d.notes ?? "",
     });
     setSaving(false);
@@ -334,9 +364,11 @@ function OrderForm() {
       code ? `*Order code:* ${code}` : null,
       `*Name:* ${d.name}`, `*WhatsApp:* ${d.phone}`, `*Work type:* ${d.work}`,
       `*Writing style:* ${STYLES[d.style]}`, `*Approx. pages:* ${d.pages}`, `*File covers:* ${d.covers}`,
-      `*Delivery:* ${DELIVERY[d.delivery]}`, `*City/State:* ${d.city}, ${d.state}`,
-      d.delivery !== "pdf" ? `*PIN code:* ${d.pin}` : null,
-      `*Deadline:* ${d.deadline}`, d.notes ? `*Notes:* ${d.notes}` : null, "",
+      `*Delivery:* ${DELIVERY[d.delivery]}`,
+      `*City:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.city}`,
+      `*State:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.state}`,
+      `*PIN code:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.pin}`,
+      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, "",
       "I'll share reference files in this chat.",
     ].filter((l) => l !== null);
     window.location.href = waLink(lines.join("\n"));
@@ -360,14 +392,16 @@ function OrderForm() {
             <select id="f-delivery" className={selectCls} {...register("delivery")}>{Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
           </F>
           <F k="deadline" label="Deadline"><Input id="f-deadline" type="date" className="h-12" {...register("deadline")} /></F>
-          <F k="city" label="City"><Input id="f-city" className="h-12" {...register("city")} /></F>
-          <F k="state" label="State"><Input id="f-state" className="h-12" {...register("state")} /></F>
-          {delivery !== "pdf" && <F k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" maxLength={6} {...register("pin")} /></F>}
+          {delivery !== "pdf" && <>
+            <F k="city" label="City"><Input id="f-city" className="h-12" required {...register("city")} /></F>
+            <F k="state" label="State"><Input id="f-state" className="h-12" required {...register("state")} /></F>
+            <F k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" required maxLength={6} {...register("pin")} /></F>
+          </>}
           <div className="sm:col-span-2"><F k="notes" label="Notes / special instructions"><Textarea id="f-notes" rows={4} {...register("notes")} /></F></div>
           <div className="sm:col-span-2">
-            <button type="submit" disabled={saving} className="disabled:opacity-60 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            <Button type="submit" disabled={saving} className="min-h-12 w-full rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper hover:bg-whatsapp hover:brightness-110">
               <MessageCircle className="size-5" aria-hidden /> {saving ? "Saving…" : "Send order on WhatsApp"}
-            </button>
+            </Button>
             <p className="mt-3 text-center text-sm text-muted-foreground">Send your reference files, photos or PDFs in the WhatsApp chat after this.</p>
           </div>
         </form>
@@ -378,21 +412,25 @@ function OrderForm() {
 
 function Samples() {
   const [open, setOpen] = useState<number | null>(null);
-  const current = open !== null ? SAMPLE_IMAGES[open] : undefined;
+  const current = open !== null ? sampleImages[open] : undefined;
+  if (sampleImages.length === 0) return null;
   return (
     <Section title="Sample work">
-      <p className="-mt-5 mb-6 text-center text-sm text-muted-foreground">Sample work (replace with your own)</p>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        {SAMPLE_IMAGES.map((img, i) => (
-          <button key={img.src} onClick={() => setOpen(i)} className="overflow-hidden rounded-xl shadow-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`View ${img.alt}`}>
-            <img src={img.src} alt={img.alt} loading="lazy" className="aspect-square w-full object-cover transition duration-300 hover:scale-105" />
-          </button>
+        {sampleImages.map((img, i) => (
+          <figure key={img.src}>
+            <Button variant="ghost" onClick={() => setOpen(i)} className="h-auto w-full overflow-hidden rounded-xl p-0 shadow-paper" aria-label={`View ${img.alt}`}>
+              <img src={img.src} alt={img.alt} loading="lazy" width={800} height={800} className="aspect-square w-full object-cover transition duration-300 hover:scale-105" />
+            </Button>
+            <figcaption className="mt-2 text-center text-sm">{img.style} · {img.pageType}</figcaption>
+          </figure>
         ))}
       </div>
       <Dialog open={open !== null} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-w-3xl p-2">
-          <DialogTitle className="sr-only">{current?.alt ?? "Sample"}</DialogTitle>
-          {current && <img src={current.src.replace("w=800", "w=1600")} alt={current.alt} className="w-full rounded-lg" />}
+          <DialogTitle className="px-3 pt-2">{current?.alt ?? "Sample"}</DialogTitle>
+          <DialogDescription className="sr-only">Full-size sample of handwritten work.</DialogDescription>
+          {current && <img src={current.src} alt={current.alt} width={800} height={1100} className="max-h-[80dvh] w-full rounded-lg object-contain" />}
         </DialogContent>
       </Dialog>
     </Section>
