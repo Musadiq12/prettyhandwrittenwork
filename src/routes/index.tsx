@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,10 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { BRAND_NAME, SAMPLE_IMAGES, waLinkTo } from "@/config";
+import { BRAND_NAME, FAQ_ITEMS, OFFER_END_DATE, SAMPLE_CAPTIONS, TESTIMONIALS, waLinkTo } from "@/config";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
@@ -36,7 +36,16 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://prettyhandwrittenwork.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://prettyhandwrittenwork.lovable.app/" }],
+    scripts: [{ type: "application/ld+json", children: JSON.stringify({
+      "@context": "https://schema.org", "@graph": [
+        { "@type": "LocalBusiness", "@id": "https://prettyhandwrittenwork.lovable.app/#business", name: BRAND_NAME,
+          url: "https://prettyhandwrittenwork.lovable.app/", description: DESC, areaServed: { "@type": "Country", name: "India" } },
+        { "@type": "FAQPage", mainEntity: FAQ_ITEMS.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
+      ],
+    }) }],
   }),
   component: Index,
 });
@@ -49,13 +58,28 @@ const HERO_IMAGES = [
   { src: u("photo-1503676260728-1c00da094a0b"), alt: "Student studying with books" },
   { src: u("photo-1434030216411-0b793f4b4173"), alt: "Hand writing on lined paper" },
   { src: u("photo-1488190211105-8b0e65b80b4e"), alt: "Writing notes at a desk" },
-  { src: u("photo-1471107340929-a87cd0f5b5f3"), alt: "Journal with handwriting" },
-  { src: u("photo-1513475382585-d06e58bcb0e0"), alt: "Study desk with notebooks" },
-  { src: u("photo-1452421822248-d4c2b47f0c81"), alt: "Notebook with pencil" },
-  { src: u("photo-1501504905252-473c47e087f8"), alt: "Study table with coffee and notes" },
-  { src: u("photo-1544716278-ca5e3f4abd8c"), alt: "Stack of books" },
-  { src: u("photo-1506784983877-45594efa4cbe"), alt: "Neatly written planner" },
 ];
+
+const samplePaths = Object.keys(import.meta.glob("/public/samples/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}")).sort();
+const sampleImages = samplePaths.map((path) => {
+  const filename = path.split("/").at(-1) ?? "";
+  const [style = "Handwriting", pageType = "Assignment page"] = filename.replace(/\.[^.]+$/, "").split("--").map((part) => part.replace(/[-_]/g, " "));
+  const caption = SAMPLE_CAPTIONS[filename] ?? { style, pageType };
+  return { src: path.replace(/^\/public/, ""), alt: `${caption.style} — ${caption.pageType}`, ...caption };
+});
+
+function useLimitedOffer() {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    if (!OFFER_END_DATE) return;
+    const end = Date.parse(OFFER_END_DATE);
+    const update = () => setActive(Number.isFinite(end) && end > Date.now());
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return active;
+}
 
 const SERVICES = [
   { icon: BookOpen, name: "School Assignments" },
@@ -104,6 +128,7 @@ function WaButton({ className = "", children = "Order on WhatsApp" }: { classNam
 function Index() {
   const st = useSiteSettings();
   const waLink = useWa();
+  const limitedOffer = useLimitedOffer();
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
     <div className="pb-24 md:pb-0">
