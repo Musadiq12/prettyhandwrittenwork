@@ -1,5 +1,5 @@
 // Editable public-site defaults. Database-backed settings may override operational rates.
-// Replace the placeholders below before publishing.
+// Replace the contact placeholders and set a future ISO date to enable the launch offer.
 export const WHATSAPP_NUMBER = "91XXXXXXXXXX"; // Country code + number, digits only.
 export const UPI_ID = "yourname@upi";
 export const BRAND_NAME = "Pretty Handwritten Work";
