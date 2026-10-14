@@ -73,10 +73,7 @@ function useLimitedOffer() {
   useEffect(() => {
     if (!OFFER_END_DATE) return;
     const end = Date.parse(OFFER_END_DATE);
-    const update = () => setActive(Number.isFinite(end) && end > Date.now());
-    update();
-    const timer = window.setInterval(update, 1000);
-    return () => window.clearInterval(timer);
+    setActive(Number.isFinite(end) && end > Date.now());
   }, []);
   return active;
 }
