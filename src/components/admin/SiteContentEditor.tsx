@@ -8,9 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_SITE_CONTENT, siteContentQuery, type SiteContent } from "@/lib/site-content";
+import { siteContentQuery, type SiteContent } from "@/lib/site-content";
 
-type StringField = Exclude<keyof SiteContent, "heroImages" | "services" | "whyChooseUs" | "faqItems" | "testimonials" | "gallerySamples" | "pricingSamples">;
 
 function Field({ id, label, value, onChange, multiline = false, type = "text", hint }: {
   id: string; label: string; value: string | number; onChange: (value: string) => void;
