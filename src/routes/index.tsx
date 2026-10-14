@@ -232,7 +232,7 @@ function Index() {
       </Section>
 
       <Section title="FAQ" ruled>
-        <Accordion type="single" collapsible defaultValue="q0" className="mx-auto max-w-2xl rounded-2xl border bg-card px-5 shadow-paper">
+        <Accordion type="single" collapsible={false} defaultValue="q0" className="mx-auto max-w-2xl rounded-2xl border bg-card px-5 shadow-paper">
           {FAQ_ITEMS.map(([q, a], i) => (
             <AccordionItem key={q} value={`q${i}`}>
               <AccordionTrigger className="text-left">{q}</AccordionTrigger>
@@ -270,15 +270,16 @@ function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = fa
   offerEndDate?: string | null; sample: { label: string; src: string };
 }) {
   const sampleExists = sampleImages.some((image) => image.src === sample.src);
+  const showOffer = limitedOffer && Boolean(offerEndDate && Date.parse(offerEndDate) > Date.now()) && was !== undefined && was !== price;
   return (
     <Card className="relative">
-      {limitedOffer && Boolean(offerEndDate) && was !== undefined && was !== price && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Launch offer ₹{price}</Badge>}
+      {showOffer && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Launch offer ₹{price}</Badge>}
       <h3 className="font-hand text-2xl font-bold">{name}</h3>
       <p className="mt-2 text-3xl font-semibold">
-        {was !== undefined && was !== price && <s className="mr-2 text-lg text-muted-foreground">₹{was}</s>}
+        {showOffer && was !== undefined && <s className="mr-2 text-lg text-muted-foreground">₹{was}</s>}
         <span className="text-base font-normal">{prefix}</span>₹{price}<span className="text-base font-normal text-muted-foreground">{unit}</span>
       </p>
-      {limitedOffer && offerEndDate && <p className="mt-1 text-xs text-muted-foreground">Ends {new Date(offerEndDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>}
+      {showOffer && offerEndDate && <p className="mt-1 text-xs text-muted-foreground">Ends {new Date(offerEndDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>}
       <div className="mt-4 overflow-hidden rounded-xl border border-dashed border-border bg-secondary/60">
         {sampleExists ? <img src={sample.src} alt={`${sample.label} handwriting sample`} width={400} height={260} loading="lazy" className="h-32 w-full object-cover" /> :
           <div className="grid h-32 place-items-center px-3 text-center text-xs text-muted-foreground"><NotebookPen className="mb-1 size-5" aria-hidden />Sample slot: {sample.label}<span>{sample.src}</span></div>}
@@ -304,7 +305,7 @@ function Estimator() {
     const discount = st.bulk_discount_percent > 0 && sub > st.bulk_discount_threshold ? Math.round((sub * st.bulk_discount_percent) / 100) : 0;
     const minimumAdjustment = Math.max(0, 120 - (sub - discount));
     const subtotal = Math.max(120, sub - discount);
-    const shipping = delivery === "pdf" || subtotal > 800 ? 0 : st.shipping_min;
+    const shipping = delivery === "pdf" || subtotal >= 800 ? 0 : st.shipping_min;
     return { writing, coverCost, scan, discount, minimumAdjustment, shipping, total: subtotal + shipping };
   }, [style, pages, covers, delivery, st]);
 
