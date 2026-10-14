@@ -17,11 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { BRAND_NAME as DEFAULT_BRAND_NAME, CONTACT_EMAIL as DEFAULT_CONTACT_EMAIL, INSTAGRAM_URL as DEFAULT_INSTAGRAM_URL, FAQ_ITEMS, HANDWRITING_SAMPLE_SLOTS, OFFER_END_DATE, WHATSAPP_NUMBER, waLinkTo } from "@/config";
+import { BRAND_NAME, INSTAGRAM_URL, FAQ_ITEMS, HANDWRITING_SAMPLE_SLOTS, WHATSAPP_NUMBER, waLinkTo } from "@/config";
 import { useSiteContent } from "@/lib/site-content";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
+  useSiteSettings, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
   type StyleKey, type DeliveryKey,
 } from "@/lib/settings";
 
@@ -104,7 +104,7 @@ function Index() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="relative z-10 border-b border-border/70 bg-background/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
-          <a href="#top" className="flex min-w-0 items-center gap-3" aria-label={BRAND_NAME + " home"}>
+          <a href="#top" className="flex min-w-0 items-center gap-3" aria-label={content.brandName + " home"}>
             <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-secondary text-foreground" aria-hidden>
               <BookOpen className="size-6" />
             </span>
@@ -230,14 +230,14 @@ function Index() {
       <footer className="border-t bg-card px-5 py-10 text-center">
         <div className="mx-auto flex max-w-xs items-center justify-center gap-3">
           <span className="grid size-10 place-items-center rounded-xl border border-border bg-secondary" aria-hidden><BookOpen className="size-5" /></span>
-          <p className="text-lg font-bold tracking-tight">{BRAND_NAME}</p>
+          <p className="text-lg font-bold tracking-tight">{content.brandName}</p>
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-center gap-5">
           <a href="#order" className="font-medium underline underline-offset-4">Place your order</a>
           <a href={content.instagramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Instagram className="size-4" aria-hidden />Instagram</a>
           <a href={`mailto:${content.contactEmail}`} className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Mail className="size-4" aria-hidden />Email</a>
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">© {new Date().getFullYear()} {BRAND_NAME}</p>
+        <p className="mt-3 text-sm text-muted-foreground">© {new Date().getFullYear()} {content.brandName}</p>
         <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">We provide handwriting and copying services only for content you submit yourself.</p>
       </footer>
 
