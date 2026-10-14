@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, ListOrdered, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, ListOrdered, Settings, LogOut, Globe } from "lucide-react";
 import { toast } from "sonner";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,6 +81,7 @@ function AdminLayout() {
   const tabs = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
     { to: "/admin/orders", label: "Orders", icon: ListOrdered, exact: false },
+    { to: "/admin/website", label: "Website", icon: Globe, exact: false },
     { to: "/admin/settings", label: "Settings", icon: Settings, exact: false },
   ] as const;
 
@@ -109,7 +110,7 @@ function AdminLayout() {
         <main className="mx-auto max-w-6xl p-4 md:p-8"><Outlet /></main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t bg-card md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-card md:hidden">
         {tabs.map((t) => (
           <Link key={t.to} to={t.to} activeOptions={{ exact: t.exact }}
             className="flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs text-muted-foreground"
