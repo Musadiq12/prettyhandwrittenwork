@@ -37,6 +37,7 @@ values (1, '{
   "ordersDelivered": 100,
   "aboutStory": "I started this service to help students who need clear, carefully organised handwritten work without the last-minute stress. Every order is prepared with attention to legibility, neat presentation, and the instructions you provide.",
   "aboutPhotoUrl": "",
+  "faviconUrl": "/favicon.ico",
   "offerEndDate": "",
   "minimumOrder": 120,
   "freeShippingThreshold": 800,
@@ -86,6 +87,7 @@ values (1, '{
     {"label":"Beautiful & Neat","src":"/samples/beautiful-neat--a4-ruled.jpg"},
     {"label":"File Cover","src":"/samples/file-cover--cover.jpg"},
     {"label":"Projects","src":"/samples/project--sample-page.jpg"}
-  ]
+  ],
+  "pricingLabels": {"basic":"Basic Running Handwriting","cursive":"Cursive Handwriting","neat":"Beautiful & Neat Handwriting","cover":"File Cover","project":"Projects"}
 }'::jsonb)
 on conflict (id) do nothing;
