@@ -39,7 +39,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   ordersDelivered: ORDERS_DELIVERED,
   aboutStory: ABOUT_STORY,
   aboutPhotoUrl: "",
-  faviconUrl: "/favicon.ico",
+  faviconUrl: "/favicon.svg",
   offerEndDate: OFFER_END_DATE ?? "",
   minimumOrder: 120,
   freeShippingThreshold: 800,
