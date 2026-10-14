@@ -55,7 +55,8 @@ export function SiteContentEditor() {
     }
     if (!Number.isFinite(Number(form.experienceYears)) || Number(form.experienceYears) < 0 ||
         !Number.isFinite(Number(form.ordersDelivered)) || Number(form.ordersDelivered) < 0 ||
-        Number(form.minimumOrder) < 0 || Number(form.freeShippingThreshold) < 0) {
+        !Number.isFinite(Number(form.minimumOrder)) || Number(form.minimumOrder) < 0 ||
+        !Number.isFinite(Number(form.freeShippingThreshold)) || Number(form.freeShippingThreshold) < 0) {
       toast.error("Stats and order thresholds must be zero or greater.");
       return;
     }
