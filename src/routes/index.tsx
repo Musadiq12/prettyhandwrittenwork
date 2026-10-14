@@ -398,7 +398,7 @@ function OrderForm() {
       `*City:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.city}`,
       `*State:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.state}`,
       `*PIN code:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.pin}`,
-      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, `*Scan add-on:* ${d.delivery === "both" ? "₹1/page" : "No"}`, "",
+      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, `*Scan add-on:* ${d.delivery === "both" ? "₹1/page" : "No"}`, `*Location:* ${d.delivery === "pdf" ? "Digital delivery only" : `${d.city}, ${d.state} ${d.pin}`}`, "",
       "I will share reference files in this chat.",
     ].filter((l) => l !== null);
     window.location.href = waLink(lines.join("\n"));
