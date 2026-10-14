@@ -24,7 +24,7 @@ const normalisePhone = (v: unknown) => {
 };
 const schema = z.object({
   whatsapp_number: z.preprocess(normalisePhone, z.string().regex(/^91\d{10}$/, "Enter your 10-digit WhatsApp number, e.g. 9876543210")),
-  upi_id: z.preprocess((v) => String(v ?? "").trim().replace(/\s+/g, ""), z.string().regex(/^[\w.\-]+@[\w.\-]+$/, "Enter a valid UPI ID, e.g. name@okaxis").refine((v) => v !== "yourname@upi", "Enter your real UPI ID")),
+  upi_id: z.preprocess((v) => String(v ?? "").trim().replace(/\s+/g, ""), z.string().regex(/^[\w.-]+@[\w.-]+$/, "Enter a valid UPI ID, e.g. name@okaxis").refine((v) => v !== "yourname@upi", "Enter your real UPI ID")),
   offer_active: z.boolean(),
   price_basic: pos, price_basic_offer: pos, price_cursive: pos, price_neat: pos, price_cover: pos,
   price_project_from: pos, pdf_addon_per_page: pos, shipping_min: pos, shipping_max: pos,
