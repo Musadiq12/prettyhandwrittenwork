@@ -100,7 +100,7 @@ function mergeContent(raw: unknown): SiteContent {
 export const siteContentQuery = queryOptions({
   queryKey: ["site-content"],
   queryFn: async (): Promise<SiteContent> => {
-    const { data, error } = await supabase.from("site_content" as never).select("content").eq("id", 1).maybeSingle() as {
+    const { data, error } = await supabase.from("site_content").select("content").eq("id", 1).maybeSingle() as {
       data: { content: unknown } | null; error: { message: string } | null;
     };
     if (error || !data?.content) return DEFAULT_SITE_CONTENT;
