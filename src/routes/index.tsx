@@ -69,7 +69,7 @@ const sampleImages = samplePaths.map((path) => {
 });
 
 function useLimitedOffer() {
-  const [active, setActive] = useState(false);
+  const [active, setActive] = useState(() => Boolean(OFFER_END_DATE && Number.isFinite(Date.parse(OFFER_END_DATE)) && Date.parse(OFFER_END_DATE) > Date.now()));
   useEffect(() => {
     if (!OFFER_END_DATE) return;
     const end = Date.parse(OFFER_END_DATE);
@@ -177,10 +177,10 @@ function Index() {
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.price_basic} limitedOffer={limitedOffer} offerEndDate={OFFER_END_DATE} sample={HANDWRITING_SAMPLE_SLOTS[0]} />
-          <PriceCard name="Cursive Handwriting" unit="/page" price={12} sample={HANDWRITING_SAMPLE_SLOTS[1]} />
-          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={18} sample={HANDWRITING_SAMPLE_SLOTS[2]} />
-          <PriceCard name="File Cover" unit="/cover" price={50} sample={HANDWRITING_SAMPLE_SLOTS[3]} />
-          <PriceCard name="Projects" prefix="Starting from " price={250} sample={HANDWRITING_SAMPLE_SLOTS[4]} />
+          <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} sample={HANDWRITING_SAMPLE_SLOTS[1]} />
+          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} sample={HANDWRITING_SAMPLE_SLOTS[2]} />
+          <PriceCard name="File Cover" unit="/cover" price={st.price_cover} sample={HANDWRITING_SAMPLE_SLOTS[3]} />
+          <PriceCard name="Projects" prefix="Starting from " price={st.price_project_from} sample={HANDWRITING_SAMPLE_SLOTS[4]} />
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">Prices are per page unless noted. Minimum order ₹120; shipping is free above ₹800. Projects are quoted based on requirements.</p>
       </Section>
@@ -272,7 +272,7 @@ function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = fa
   const sampleExists = sampleImages.some((image) => image.src === sample.src);
   return (
     <Card className="relative">
-      {limitedOffer && was !== undefined && was !== price && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Launch offer ₹{price}</Badge>}
+      {limitedOffer && Boolean(offerEndDate) && was !== undefined && was !== price && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Launch offer ₹{price}</Badge>}
       <h3 className="font-hand text-2xl font-bold">{name}</h3>
       <p className="mt-2 text-3xl font-semibold">
         {was !== undefined && was !== price && <s className="mr-2 text-lg text-muted-foreground">₹{was}</s>}
