@@ -60,11 +60,9 @@ function SheetBody({ order, onClose }: { order: Order; onClose: () => void }) {
 
   // WhatsApp shortcuts
   const price = order.final_price ?? order.estimated_total;
-  const site = typeof window !== "undefined" ? window.location.origin : "";
   const templates = {
     confirmed: `Hi ${order.name}! Order confirmed (${order.order_code}): your total is ₹${price}. Please pay 50% advance (₹${Math.ceil(Number(price) / 2)}) on UPI ${st.upi_id}.`,
     ready: `Hi ${order.name}! Your work for order ${order.order_code} is ready ✍️`,
-    pdf: `Hi ${order.name}! Your PDF is ready. Download at ${site}/my-pdf with code ${order.order_code} and your WhatsApp number.`,
     dispatched: `Hi ${order.name}! Order ${order.order_code} has been dispatched. Tracking: ${order.tracking_info ?? "(add tracking)"}`,
   };
   const [msg, setMsg] = useState<string | null>(null);
@@ -112,19 +110,13 @@ function SheetBody({ order, onClose }: { order: Order; onClose: () => void }) {
       </section>
 
       <PdfSection order={order} refresh={refresh}
-        onUploaded={() => {
-          toast("PDF uploaded", {
-            action: { label: "Mark ready + message", onClick: () => { void update({ status: "ready" }, "Marked ready"); setMsg(templates.pdf); } },
-            duration: 10000,
-          });
-        }} />
+        onUploaded={() => toast.success("PDF uploaded")} />
 
       <section className="space-y-3 rounded-xl border bg-card p-4">
         <h3 className="font-semibold">WhatsApp messages</h3>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" size="sm" onClick={() => setMsg(templates.confirmed)}>Order confirmed</Button>
           <Button variant="outline" size="sm" onClick={() => setMsg(templates.ready)}>Work ready</Button>
-          <Button variant="outline" size="sm" onClick={() => setMsg(templates.pdf)}>PDF ready</Button>
           <Button variant="outline" size="sm" onClick={() => setMsg(templates.dispatched)}>Dispatched</Button>
         </div>
         {msg !== null && (

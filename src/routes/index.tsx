@@ -380,7 +380,6 @@ function OrderForm() {
       `*State:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.state}`,
       `*PIN code:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.pin}`,
       `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, "",
-      "I'll share reference files in this chat.",
     ].filter((l) => l !== null);
     window.location.href = waLink(lines.join("\n"));
   };
