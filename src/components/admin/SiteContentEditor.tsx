@@ -124,6 +124,7 @@ export function SiteContentEditor() {
         <Field id="content-instagram" label="Instagram URL" value={form.instagramUrl} onChange={(v) => patch("instagramUrl", v)} />
         <Field id="content-email" label="Contact email" value={form.contactEmail} onChange={(v) => patch("contactEmail", v)} type="email" />
         <Field id="content-photo" label="About photo URL" value={form.aboutPhotoUrl} onChange={(v) => patch("aboutPhotoUrl", v)} hint="Paste an image URL. Leave blank to show the existing photo placeholder." />
+        <Field id="content-favicon" label="Favicon URL or path" value={form.faviconUrl} onChange={(v) => patch("faviconUrl", v)} hint="For example, /favicon.ico or an image URL." />
       </div>
       <Field id="content-story" label="About story" value={form.aboutStory} onChange={(v) => patch("aboutStory", v)} multiline />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -163,6 +164,11 @@ export function SiteContentEditor() {
 
     <Panel title="Pricing display & delivery thresholds" description="Operational rates stay in Settings above. These control public-facing minimum-order and free-shipping messages, plus sample cards." icon={Images}>
       <div className="grid gap-4 sm:grid-cols-2">
+        <Field id="price-label-basic" label="Basic tier title" value={form.pricingLabels.basic} onChange={(v) => patch("pricingLabels", { ...form.pricingLabels, basic: v })} />
+        <Field id="price-label-cursive" label="Cursive tier title" value={form.pricingLabels.cursive} onChange={(v) => patch("pricingLabels", { ...form.pricingLabels, cursive: v })} />
+        <Field id="price-label-neat" label="Neat tier title" value={form.pricingLabels.neat} onChange={(v) => patch("pricingLabels", { ...form.pricingLabels, neat: v })} />
+        <Field id="price-label-cover" label="File cover tier title" value={form.pricingLabels.cover} onChange={(v) => patch("pricingLabels", { ...form.pricingLabels, cover: v })} />
+        <Field id="price-label-project" label="Projects tier title" value={form.pricingLabels.project} onChange={(v) => patch("pricingLabels", { ...form.pricingLabels, project: v })} />
         <Field id="content-min-order" label="Minimum order (₹)" value={form.minimumOrder} onChange={(v) => patch("minimumOrder", Number(v))} type="number" />
         <Field id="content-free-shipping" label="Free shipping above (₹)" value={form.freeShippingThreshold} onChange={(v) => patch("freeShippingThreshold", Number(v))} type="number" />
         <Field id="content-offer-end" label="Launch offer end date/time" value={form.offerEndDate} onChange={(v) => patch("offerEndDate", v)} hint="ISO date/time with timezone, e.g. 2026-12-31T23:59:00+05:30. Leave blank to hide the countdown/launch offer." />
