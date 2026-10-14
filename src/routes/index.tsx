@@ -86,6 +86,9 @@ function Index() {
 
   useEffect(() => {
     document.title = content.seoTitle;
+    let icon = document.head.querySelector('link[rel~="icon"]') as HTMLLinkElement | null;
+    if (!icon) { icon = document.createElement("link"); icon.rel = "icon"; document.head.appendChild(icon); }
+    if (content.faviconUrl.trim()) icon.href = content.faviconUrl;
     const setMeta = (selector: string, name: string, value: string) => {
       let element = document.head.querySelector(selector) as HTMLMetaElement | null;
       if (!element) { element = document.createElement("meta"); element.setAttribute("name", name); document.head.appendChild(element); }
@@ -164,11 +167,11 @@ function Index() {
 
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name="Basic Running Handwriting" unit="/page" price={showLaunchPrice ? st.price_basic_offer : st.price_basic} was={showLaunchPrice ? st.price_basic : undefined} limitedOffer={showLaunchPrice} offerEndDate={content.offerEndDate} sample={content.pricingSamples[0] ?? HANDWRITING_SAMPLE_SLOTS[0]} />
-          <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} sample={content.pricingSamples[1] ?? HANDWRITING_SAMPLE_SLOTS[1]} />
-          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} sample={content.pricingSamples[2] ?? HANDWRITING_SAMPLE_SLOTS[2]} />
-          <PriceCard name="File Cover" unit="/cover" price={st.price_cover} sample={content.pricingSamples[3] ?? HANDWRITING_SAMPLE_SLOTS[3]} />
-          <PriceCard name="Projects" prefix="Starting from " price={st.price_project_from} sample={content.pricingSamples[4] ?? HANDWRITING_SAMPLE_SLOTS[4]} />
+          <PriceCard name={content.pricingLabels.basic} unit="/page" price={showLaunchPrice ? st.price_basic_offer : st.price_basic} was={showLaunchPrice ? st.price_basic : undefined} limitedOffer={showLaunchPrice} offerEndDate={content.offerEndDate} sample={content.pricingSamples[0] ?? HANDWRITING_SAMPLE_SLOTS[0]} />
+          <PriceCard name={content.pricingLabels.cursive} unit="/page" price={st.price_cursive} sample={content.pricingSamples[1] ?? HANDWRITING_SAMPLE_SLOTS[1]} />
+          <PriceCard name={content.pricingLabels.neat} unit="/page" price={st.price_neat} sample={content.pricingSamples[2] ?? HANDWRITING_SAMPLE_SLOTS[2]} />
+          <PriceCard name={content.pricingLabels.cover} unit="/cover" price={st.price_cover} sample={content.pricingSamples[3] ?? HANDWRITING_SAMPLE_SLOTS[3]} />
+          <PriceCard name={content.pricingLabels.project} prefix="Starting from " price={st.price_project_from} sample={content.pricingSamples[4] ?? HANDWRITING_SAMPLE_SLOTS[4]} />
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">Prices are per page unless noted. Minimum order ₹{content.minimumOrder}; shipping is free above ₹{content.freeShippingThreshold}. Projects are quoted based on requirements.</p>
       </Section>
