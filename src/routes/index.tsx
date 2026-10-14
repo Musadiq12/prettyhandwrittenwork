@@ -165,7 +165,7 @@ function Index() {
         </div>
       </Section>
 
-      <Section title="Services for handwritten assignments in India">
+      <Section title="Handwritten assignment services in India">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
           {SERVICES.map(({ icon: Icon, name }) => (
             <Card key={name} className="flex flex-col items-center gap-3 text-center">
