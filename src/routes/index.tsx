@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   BookOpen, GraduationCap, FlaskConical, FolderKanban, NotebookPen, MessageSquareText,
   Feather, Palette, Sparkles, Truck, FileText, Layers, Package, Clock, MapPin, ShieldCheck,
-  IndianRupee, MessageCircle,
+  IndianRupee, MessageCircle, Star,
 } from "lucide-react";
 import { ImageStreamHero } from "@/components/ui/image-stream-hero";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { BRAND_NAME, FAQ_ITEMS, OFFER_END_DATE, SAMPLE_CAPTIONS, TESTIMONIALS, waLinkTo } from "@/config";
+import { BRAND_NAME, FAQ_ITEMS, OFFER_END_DATE, SAMPLE_CAPTIONS, waLinkTo } from "@/config";
+import { publishedTestimonialsQuery } from "@/lib/testimonials";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
@@ -116,6 +118,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 function Index() {
   const st = useSiteSettings();
   const limitedOffer = useLimitedOffer();
+  const { data: testimonials = [] } = useQuery(publishedTestimonialsQuery);
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -234,18 +237,22 @@ function Index() {
       <OrderForm />
       <Samples />
 
-      <Section title="Testimonials">
-        <div className="grid gap-4 md:grid-cols-3">
-          {TESTIMONIALS.map((item, i) => (
-            <Card key={i}>
-              <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>
-              <blockquote className="text-sm leading-6">“{item.quote}”</blockquote>
-              <p className="mt-4 font-semibold">{item.name}</p>
-              <p className="text-sm text-muted-foreground">{item.education}</p>
-            </Card>
-          ))}
-        </div>
-      </Section>
+      {testimonials.length > 0 && (
+        <Section title="What our customers say">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((item) => (
+              <Card key={item.id} className="h-full">
+                <div className="mb-3 flex gap-1" role="img" aria-label={`${item.rating} out of 5 stars`}>
+                  {Array.from({ length: item.rating }, (_, i) => <Star key={i} className="size-4 fill-current text-primary" aria-hidden />)}
+                </div>
+                <blockquote className="text-sm leading-7">“{item.quote}”</blockquote>
+                <p className="mt-4 font-semibold">{item.name}</p>
+                {item.education && <p className="text-sm text-muted-foreground">{item.education}</p>}
+              </Card>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <Section title="Why choose us">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
