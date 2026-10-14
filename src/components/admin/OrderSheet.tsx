@@ -143,11 +143,12 @@ function SheetBody({ order, onClose }: { order: Order; onClose: () => void }) {
   );
 }
 
-function uploadWithProgress(path: string, file: File, onProgress: (p: number) => void) {
-  return new Promise<void>(async (resolve, reject) => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (!token) return reject(new Error("Not signed in"));
+async function uploadWithProgress(path: string, file: File, onProgress: (p: number) => void) {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Not signed in");
+
+  await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${import.meta.env["VITE_SUPABASE_URL"]}/storage/v1/object/order-pdfs/${path}`);
     xhr.setRequestHeader("Authorization", `Bearer ${token}`);
