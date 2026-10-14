@@ -50,7 +50,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const u = (id: string) => `https://images.unsplash.com/${id}?w=800&q=80&auto=format`;
+const u = (id: string) => `https://images.unsplash.com/${id}?w=640&q=75&auto=format`;
 const HERO_IMAGES = [
   { src: u("photo-1455390582262-044cdead277a"), alt: "Handwritten notes in an open notebook" },
   { src: u("photo-1517842645767-c639042777db"), alt: "Notebook and pen on a desk" },
