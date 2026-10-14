@@ -6,7 +6,7 @@ import { z } from "zod";
 import {
   BookOpen, GraduationCap, FlaskConical, FolderKanban, NotebookPen, MessageSquareText,
   Feather, Palette, Sparkles, Truck, FileText, Layers, Package, Clock, MapPin, ShieldCheck,
-  IndianRupee, MessageCircle,
+  IndianRupee, MessageCircle, Instagram, Mail,
 } from "lucide-react";
 import { ImageStreamHero } from "@/components/ui/image-stream-hero";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { BRAND_NAME, FAQ_ITEMS, OFFER_END_DATE, SAMPLE_CAPTIONS, TESTIMONIALS, waLinkTo } from "@/config";
+import { ABOUT_STORY, BRAND_NAME, CONTACT_EMAIL, EXPERIENCE_YEARS, FAQ_ITEMS, HANDWRITING_SAMPLE_SLOTS, INSTAGRAM_URL, OFFER_END_DATE, ORDERS_DELIVERED, SAMPLE_CAPTIONS, TESTIMONIALS, WHATSAPP_NUMBER, waLinkTo } from "@/config";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
   type StyleKey, type DeliveryKey,
 } from "@/lib/settings";
 
-const TITLE = "Pretty Handwritten Work | Handwritten Assignments Delivered Across India";
-const DESC = "Neat, pretty handwritten assignments, records, notes and projects for students — delivered anywhere in India, with optional scanned PDF. Order on WhatsApp.";
+const TITLE = "Pretty Handwritten Work | Handwritten Assignments in India";
+const DESC = "Neat, pretty handwritten assignments in India, records, notes and projects for students — delivered anywhere in India, with optional scanned PDF. Order on WhatsApp.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -86,8 +86,7 @@ const SERVICES = [
   { icon: GraduationCap, name: "College & University Assignments" },
   { icon: FlaskConical, name: "Practical Record Writing" },
   { icon: FolderKanban, name: "Project Writing" },
-  { icon: NotebookPen, name: "Notes & Copywriting" },
-  { icon: MessageSquareText, name: "Handwritten Questions and Answers" },
+  { icon: MessageSquareText, name: "Notes, Copywriting & Handwritten Questions and Answers" },
   { icon: Feather, name: "Cursive and Beautiful Handwriting" },
   { icon: Palette, name: "File Covers and Decorative Titles" },
   { icon: Sparkles, name: "Custom Written Work according to your requirements" },
@@ -139,8 +138,8 @@ function Index() {
       <div id="top">
       <ImageStreamHero images={HERO_IMAGES}>
         <div className="fade-up mx-4 max-w-2xl rounded-3xl border border-white/30 bg-background/85 p-7 text-center shadow-xl backdrop-blur-md md:p-10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Handwritten work across India</p>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">Beautifully handwritten assignments, without the hassle.</h1>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Handwritten assignments in India</p>
+          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">Handwritten assignments in India, beautifully done.</h1>
           <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground md:text-base">Neat, consistent handwriting for school, college and university work — with clear pricing and delivery options.</p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="min-h-12 rounded-full px-7 shadow-sm">
@@ -153,13 +152,22 @@ function Index() {
         </div>
       </ImageStreamHero>
 
-      <Section title="About us" ruled>
-        <p className="mx-auto max-w-2xl pl-10 text-lg leading-8">
-          Welcome to Pretty Handwritten Work! We provide neat, clean, and beautiful handwritten work for school, college, and university students. Our goal is to make written work look organized, attractive, and easy to read.
-        </p>
+      <Section title="About our handwritten assignments in India" ruled>
+        <div className="grid items-center gap-6 md:grid-cols-[220px_1fr]">
+          <div className="grid aspect-[4/5] place-items-center rounded-2xl border-2 border-dashed border-border bg-card p-5 text-center text-sm text-muted-foreground">
+            <div><NotebookPen className="mx-auto mb-3 size-8" aria-hidden /><span>Personal photo slot</span><span className="mt-1 block text-xs">Add your photo here</span></div>
+          </div>
+          <div>
+            <p className="text-lg leading-8">{ABOUT_STORY}</p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <Card className="text-center"><p className="font-hand text-4xl font-bold">{EXPERIENCE_YEARS}+</p><p className="text-sm text-muted-foreground">Years of experience</p></Card>
+              <Card className="text-center"><p className="font-hand text-4xl font-bold">{ORDERS_DELIVERED}+</p><p className="text-sm text-muted-foreground">Orders delivered</p></Card>
+            </div>
+          </div>
+        </div>
       </Section>
 
-      <Section title="Handwritten assignments in India — our services">
+      <Section title="Services for handwritten assignments in India">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
           {SERVICES.map(({ icon: Icon, name }) => (
             <Card key={name} className="flex flex-col items-center gap-3 text-center">
@@ -172,20 +180,18 @@ function Index() {
 
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.offer_active ? st.price_basic : undefined} limitedOffer={st.offer_active && limitedOffer} />
-          <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} />
-          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} />
-          <PriceCard name="File Cover" unit="/cover" price={st.price_cover} />
-          <PriceCard name="Projects" prefix="Starting from " price={st.price_project_from} />
+          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.price_basic} limitedOffer={limitedOffer} offerEndDate={OFFER_END_DATE} sample={HANDWRITING_SAMPLE_SLOTS[0]} />
+          <PriceCard name="Cursive Handwriting" unit="/page" price={12} sample={HANDWRITING_SAMPLE_SLOTS[1]} />
+          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={18} sample={HANDWRITING_SAMPLE_SLOTS[2]} />
+          <PriceCard name="File Cover" unit="/cover" price={50} sample={HANDWRITING_SAMPLE_SLOTS[3]} />
+          <PriceCard name="Projects" prefix="Starting from " price={250} sample={HANDWRITING_SAMPLE_SLOTS[4]} />
         </div>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
-          Final prices may vary depending on page count, complexity, diagrams, materials, and delivery requirements. Shipping charges are separate.
-        </p>
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">Prices are per page unless noted. Minimum order ₹120; shipping is free above ₹800. Projects are quoted based on requirements.</p>
       </Section>
 
       <Section title="Delivery options">
         <div className="grid gap-4 md:grid-cols-3">
-          <Card><Truck className="mb-3 size-7 text-ink" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical Delivery</h3><p className="mt-2 text-sm">Handwritten pages couriered all over India. {SHIPPING_TEXT}</p></Card>
+          <Card><Truck className="mb-3 size-7 text-ink" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical Delivery</h3><p className="mt-2 text-sm">Handwritten pages couriered all over India. {SHIPPING_TEXT} Orders above ₹800 ship free.</p></Card>
           <Card><FileText className="mb-3 size-7" aria-hidden /><h3 className="font-hand text-3xl font-bold">PDF Only</h3><p className="mt-2 text-sm">A clear scan sent on WhatsApp or email. Same per-page rate, no shipping.</p></Card>
           <Card><Layers className="mb-3 size-7" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical + PDF</h3><p className="mt-2 text-sm">Get both the pages and a scan. Scan add-on of ₹{st.pdf_addon_per_page}/page.</p></Card>
         </div>
@@ -245,29 +251,42 @@ function Index() {
           <span className="grid size-10 place-items-center rounded-xl border border-border bg-secondary" aria-hidden><BookOpen className="size-5" /></span>
           <p className="text-lg font-bold tracking-tight">{BRAND_NAME}</p>
         </div>
-        <a href="#order" className="mt-4 inline-block font-medium underline underline-offset-4">Place your order</a>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-5">
+          <a href="#order" className="font-medium underline underline-offset-4">Place your order</a>
+          <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Instagram className="size-4" aria-hidden />Instagram</a>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Mail className="size-4" aria-hidden />Email</a>
+        </div>
         <p className="mt-3 text-sm text-muted-foreground">© {new Date().getFullYear()} {BRAND_NAME}</p>
         <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">We provide handwriting and copying services only for content you submit yourself.</p>
       </footer>
 
-      <a href="#order" aria-label="Place your order"
-        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-xl transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:bottom-6 sm:right-6">
-        <NotebookPen className="size-4" aria-hidden /> <span>Place your order</span>
+      <a href={waLinkTo(WHATSAPP_NUMBER, "Hi! I have a question about handwritten assignments.")} target="_blank" rel="noreferrer" aria-label="Chat with us on WhatsApp"
+        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-40 inline-flex size-14 items-center justify-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-xl transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:bottom-6 sm:right-6">
+        <MessageCircle className="size-7" aria-hidden />
       </a>
       </div>
     </div>
   );
 }
 
-function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = false }: { name: string; price: number; unit?: string; was?: number | undefined; prefix?: string; limitedOffer?: boolean }) {
+function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = false, offerEndDate, sample }: {
+  name: string; price: number; unit?: string; was?: number; prefix?: string; limitedOffer?: boolean;
+  offerEndDate?: string | null; sample: { label: string; src: string };
+}) {
+  const sampleExists = sampleImages.some((image) => image.src === sample.src);
   return (
     <Card className="relative">
-      {limitedOffer && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Limited-time offer ₹{price}/page</Badge>}
+      {limitedOffer && was !== undefined && was !== price && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Launch offer ₹{price}</Badge>}
       <h3 className="font-hand text-2xl font-bold">{name}</h3>
       <p className="mt-2 text-3xl font-semibold">
-        {was && <s className="mr-2 text-lg text-muted-foreground">₹{was}</s>}
+        {was !== undefined && was !== price && <s className="mr-2 text-lg text-muted-foreground">₹{was}</s>}
         <span className="text-base font-normal">{prefix}</span>₹{price}<span className="text-base font-normal text-muted-foreground">{unit}</span>
       </p>
+      {limitedOffer && offerEndDate && <p className="mt-1 text-xs text-muted-foreground">Ends {new Date(offerEndDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>}
+      <div className="mt-4 overflow-hidden rounded-xl border border-dashed border-border bg-secondary/60">
+        {sampleExists ? <img src={sample.src} alt={`${sample.label} handwriting sample`} width={400} height={260} loading="lazy" className="h-32 w-full object-cover" /> :
+          <div className="grid h-32 place-items-center px-3 text-center text-xs text-muted-foreground"><NotebookPen className="mb-1 size-5" aria-hidden />Sample slot: {sample.label}<span>{sample.src}</span></div>}
+      </div>
     </Card>
   );
 }
@@ -286,8 +305,11 @@ function Estimator() {
     const coverCost = c * st.price_cover;
     const scan = delivery === "both" ? p * st.pdf_addon_per_page : 0;
     const sub = writing + coverCost + scan;
-    const discount = sub > st.bulk_discount_threshold ? Math.round((sub * st.bulk_discount_percent) / 100) : 0;
-    return { writing, coverCost, scan, discount, total: sub - discount };
+    const discount = st.bulk_discount_percent > 0 && sub > st.bulk_discount_threshold ? Math.round((sub * st.bulk_discount_percent) / 100) : 0;
+    const minimumAdjustment = Math.max(0, 120 - (sub - discount));
+    const subtotal = Math.max(120, sub - discount);
+    const shipping = delivery === "pdf" || subtotal > 800 ? 0 : st.shipping_min;
+    return { writing, coverCost, scan, discount, minimumAdjustment, shipping, total: subtotal + shipping };
   }, [style, pages, covers, delivery, st]);
 
   return (
@@ -310,12 +332,14 @@ function Estimator() {
             <div className="flex justify-between"><dt>Writing</dt><dd>₹{calc.writing}</dd></div>
             <div className="flex justify-between"><dt>File covers</dt><dd>₹{calc.coverCost}</dd></div>
             {delivery === "both" && <div className="flex justify-between gap-3"><dt>Scan add-on (₹{st.pdf_addon_per_page}/page)</dt><dd>₹{calc.scan}</dd></div>}
-            <div className="flex justify-between"><dt>Bulk discount ({st.bulk_discount_percent}% over ₹{st.bulk_discount_threshold})</dt><dd>−₹{calc.discount}</dd></div>
+            {calc.discount > 0 && <div className="flex justify-between"><dt>Bulk discount ({st.bulk_discount_percent}% over ₹{st.bulk_discount_threshold})</dt><dd>−₹{calc.discount}</dd></div>}
+            {calc.minimumAdjustment > 0 && <div className="flex justify-between"><dt>Minimum order adjustment</dt><dd>₹{calc.minimumAdjustment}</dd></div>}
+            {delivery !== "pdf" && <div className="flex justify-between"><dt>{calc.shipping === 0 ? "Shipping (free over ₹800)" : "Estimated shipping"}</dt><dd>{calc.shipping === 0 ? "Free" : `₹${calc.shipping}`}</dd></div>}
           </dl>
           <div className="mt-4 border-t border-ink/20 pt-4">
             <p className="text-sm">Estimated total</p>
             <p className="font-hand text-5xl font-bold">₹{calc.total}</p>
-            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : "Shipping extra, confirmed on WhatsApp."}</p>
+            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : calc.shipping === 0 ? "Free shipping on orders above ₹800." : "Shipping estimate; final fee confirmed on WhatsApp."}</p>
             <p className="mt-2 text-xs text-muted-foreground">Projects: starting from ₹{st.price_project_from}, chat for a quote.</p>
           </div>
         </div>
@@ -371,7 +395,7 @@ function OrderForm() {
       toast.success(`Order ${code} saved! Opening WhatsApp…`);
     }
     const lines = [
-      "Hi! New order for Pretty Handwritten Work ✍️", "",
+      "Hi! New order for Pretty Handwritten Work", "",
       code ? `*Order code:* ${code}` : null,
       `*Name:* ${d.name}`, `*WhatsApp:* ${d.phone}`, `*Work type:* ${d.work}`,
       `*Writing style:* ${STYLES[d.style]}`, `*Approx. pages:* ${d.pages}`, `*File covers:* ${d.covers}`,
@@ -379,8 +403,8 @@ function OrderForm() {
       `*City:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.city}`,
       `*State:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.state}`,
       `*PIN code:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.pin}`,
-      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, "",
-      "I'll share reference files in this chat.",
+      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, `*Scan add-on:* ${d.delivery === "both" ? "₹1/page" : "No"}`, "",
+      "I will share reference files in this chat.",
     ].filter((l) => l !== null);
     window.location.href = waLink(lines.join("\n"));
   };
