@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   BookOpen, GraduationCap, FlaskConical, FolderKanban, NotebookPen, MessageSquareText,
   Feather, Palette, Sparkles, Truck, FileText, Layers, Package, Clock, MapPin, ShieldCheck,
-  IndianRupee, MessageCircle,
+  IndianRupee, MessageCircle, Star,
 } from "lucide-react";
 import { ImageStreamHero } from "@/components/ui/image-stream-hero";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { BRAND_NAME, FAQ_ITEMS, OFFER_END_DATE, SAMPLE_CAPTIONS, TESTIMONIALS, waLinkTo } from "@/config";
+import { BRAND_NAME, FAQ_ITEMS, OFFER_END_DATE, SAMPLE_CAPTIONS, waLinkTo } from "@/config";
+import { publishedTestimonialsQuery } from "@/lib/testimonials";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
@@ -116,6 +118,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 function Index() {
   const st = useSiteSettings();
   const limitedOffer = useLimitedOffer();
+  const { data: testimonials = [] } = useQuery(publishedTestimonialsQuery);
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -153,10 +156,32 @@ function Index() {
         </div>
       </ImageStreamHero>
 
-      <Section title="About us" ruled>
-        <p className="mx-auto max-w-2xl pl-10 text-lg leading-8">
-          Welcome to Pretty Handwritten Work! We provide neat, clean, and beautiful handwritten work for school, college, and university students. Our goal is to make written work look organized, attractive, and easy to read.
-        </p>
+      <Section title="About Pretty Handwritten Work" ruled>
+        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center">
+          <div className="space-y-4 text-base leading-7 text-muted-foreground md:text-lg md:leading-8">
+            <p className="text-lg font-semibold leading-7 text-foreground md:text-xl">Neat presentation. Thoughtful details. Handwritten work you can feel confident sharing.</p>
+            <p>Pretty Handwritten Work helps students prepare clear, well-presented handwritten assignments, practical records, project work, notes and other written materials for school, college and university requirements.</p>
+            <p>We focus on legibility, consistent handwriting and careful page presentation so your material is easier to read and looks organised from the first page to the last. You can choose a writing style and tell us about your page count, deadline and delivery preference before we confirm the final quote.</p>
+            <p>Whether you need physical pages delivered by courier or a scanned PDF, we aim to make the process straightforward: share your requirements, review the details with us on WhatsApp, and confirm the order before work begins.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <span className="mb-3 grid size-11 place-items-center rounded-xl bg-secondary"><Feather className="size-5" aria-hidden /></span>
+              <h3 className="font-semibold">Consistent presentation</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">Readable handwriting, tidy layouts and attention to the details that make pages feel complete.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <span className="mb-3 grid size-11 place-items-center rounded-xl bg-secondary"><MessageCircle className="size-5" aria-hidden /></span>
+              <h3 className="font-semibold">Clear ordering process</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">Share your instructions, choose a delivery option and confirm pricing with us before proceeding.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:col-span-2 md:col-span-1">
+              <span className="mb-3 grid size-11 place-items-center rounded-xl bg-secondary"><Package className="size-5" aria-hidden /></span>
+              <h3 className="font-semibold">Flexible delivery</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">Choose physical delivery, PDF-only delivery or both, depending on your needs.</p>
+            </div>
+          </div>
+        </div>
       </Section>
 
       <Section title="Handwritten assignments in India — our services">
@@ -170,17 +195,25 @@ function Index() {
         </div>
       </Section>
 
-      <Section id="prices" title="Prices" ruled>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.offer_active ? st.price_basic : undefined} limitedOffer={st.offer_active && limitedOffer} />
+      <Section id="prices" title="Transparent, Simple Pricing" ruled>
+        <p className="mx-auto -mt-3 mb-8 max-w-2xl text-center leading-7 text-muted-foreground md:text-lg">Choose the handwriting style that suits your work. These starting rates help you plan your order; we’ll confirm the final quote after reviewing your requirements.</p>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.offer_active ? st.price_basic : undefined} limitedOffer={st.offer_active && limitedOffer} featured />
           <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} />
           <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} />
           <PriceCard name="File Cover" unit="/cover" price={st.price_cover} />
           <PriceCard name="Projects" prefix="Starting from " price={st.price_project_from} />
         </div>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
-          Final prices may vary depending on page count, complexity, diagrams, materials, and delivery requirements. Shipping charges are separate.
-        </p>
+        <div className="mx-auto mt-7 flex max-w-4xl flex-col gap-3 rounded-2xl border border-border bg-secondary/60 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div>
+            <p className="font-semibold">Need a quote for a specific assignment?</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">Tell us the page count, writing style, deadline and delivery preference. We’ll confirm the final price before you proceed.</p>
+          </div>
+          <Button asChild className="min-h-11 shrink-0 rounded-full px-5">
+            <a href="#order"><NotebookPen className="mr-2 size-4" aria-hidden />Get a quote</a>
+          </Button>
+        </div>
+        <p className="mx-auto mt-5 max-w-2xl text-center text-xs leading-5 text-muted-foreground">Final prices may vary based on page count, complexity, diagrams, materials and delivery requirements. Shipping is charged separately for physical orders.</p>
       </Section>
 
       <Section title="Delivery options">
@@ -204,18 +237,22 @@ function Index() {
       <OrderForm />
       <Samples />
 
-      <Section title="Testimonials">
-        <div className="grid gap-4 md:grid-cols-3">
-          {TESTIMONIALS.map((item, i) => (
-            <Card key={i}>
-              <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>
-              <blockquote className="text-sm leading-6">“{item.quote}”</blockquote>
-              <p className="mt-4 font-semibold">{item.name}</p>
-              <p className="text-sm text-muted-foreground">{item.education}</p>
-            </Card>
-          ))}
-        </div>
-      </Section>
+      {testimonials.length > 0 && (
+        <Section title="What our customers say">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((item) => (
+              <Card key={item.id} className="h-full">
+                <div className="mb-3 flex gap-1" role="img" aria-label={`${item.rating} out of 5 stars`}>
+                  {Array.from({ length: item.rating }, (_, i) => <Star key={i} className="size-4 fill-current text-primary" aria-hidden />)}
+                </div>
+                <blockquote className="text-sm leading-7">“{item.quote}”</blockquote>
+                <p className="mt-4 font-semibold">{item.name}</p>
+                {item.education && <p className="text-sm text-muted-foreground">{item.education}</p>}
+              </Card>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <Section title="Why choose us">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -259,16 +296,23 @@ function Index() {
   );
 }
 
-function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = false }: { name: string; price: number; unit?: string; was?: number | undefined; prefix?: string; limitedOffer?: boolean }) {
+function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = false, featured = false }: { name: string; price: number; unit?: string; was?: number | undefined; prefix?: string; limitedOffer?: boolean; featured?: boolean }) {
   return (
-    <Card className="relative">
-      {limitedOffer && <Badge className="absolute -top-3 right-4 bg-blush text-ink">Limited-time offer ₹{price}/page</Badge>}
-      <h3 className="font-hand text-2xl font-bold">{name}</h3>
-      <p className="mt-2 text-3xl font-semibold">
-        {was && <s className="mr-2 text-lg text-muted-foreground">₹{was}</s>}
-        <span className="text-base font-normal">{prefix}</span>₹{price}<span className="text-base font-normal text-muted-foreground">{unit}</span>
-      </p>
-    </Card>
+    <div className={`relative flex h-full flex-col rounded-2xl border p-6 transition duration-200 hover:-translate-y-1 hover:shadow-lg ${featured ? "border-primary/60 bg-primary/[0.04] shadow-md ring-1 ring-primary/15" : "border-border bg-card shadow-sm"}`}>
+      {featured && <Badge className="mb-4 w-fit rounded-full px-3 py-1">Popular choice</Badge>}
+      {limitedOffer && <Badge className={`absolute right-4 top-4 max-w-[60%] ${featured ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>Limited offer</Badge>}
+      <h3 className="max-w-[90%] text-base font-semibold leading-6">{name}</h3>
+      <div className="mt-5 flex min-h-14 flex-wrap items-baseline gap-x-2 gap-y-1">
+        {was !== undefined && <s className="text-sm text-muted-foreground">₹{was}</s>}
+        {prefix && <span className="text-sm text-muted-foreground">{prefix}</span>}
+        <span className="text-4xl font-bold tracking-tight">₹{price}</span>
+        {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
+      </div>
+      <div className="mt-5 border-t border-border/80 pt-4">
+        <p className="text-sm leading-6 text-muted-foreground">{name === "Projects" ? "Custom project work priced according to scope and requirements." : name === "File Cover" ? "A neat cover to complete your file presentation." : "A clear, consistent writing style for your pages."}</p>
+      </div>
+      {limitedOffer && <p className="mt-3 text-xs font-medium text-primary">Offer pricing is currently available.</p>}
+    </div>
   );
 }
 
