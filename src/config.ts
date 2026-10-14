@@ -43,6 +43,7 @@ export const DEFAULT_SETTINGS = {
   pdf_addon_per_page: 1,
   shipping_min: 50,
   shipping_max: 100,
+  free_shipping_threshold: 800,
 
   bulk_discount_percent: 0,
   bulk_discount_threshold: 1500,
