@@ -33,7 +33,7 @@ export const FAQ_ITEMS = [
 export const DEFAULT_SETTINGS = {
   whatsapp_number: WHATSAPP_NUMBER,
   upi_id: UPI_ID,
-  offer_active: true,
+  offer_active: Boolean(OFFER_END_DATE && Number.isFinite(Date.parse(OFFER_END_DATE)) && Date.parse(OFFER_END_DATE) > Date.now()),
   price_basic: 8,
   price_basic_offer: 6,
   price_cursive: 12,
