@@ -17,10 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { ABOUT_STORY, BRAND_NAME, CONTACT_EMAIL, EXPERIENCE_YEARS, FAQ_ITEMS, HANDWRITING_SAMPLE_SLOTS, INSTAGRAM_URL, OFFER_END_DATE, ORDERS_DELIVERED, SAMPLE_CAPTIONS, TESTIMONIALS, WHATSAPP_NUMBER, waLinkTo } from "@/config";
+import { BRAND_NAME, INSTAGRAM_URL, FAQ_ITEMS, WHATSAPP_NUMBER, waLinkTo } from "@/config";
+import { useSiteContent } from "@/lib/site-content";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  useSiteSettings, basicRateOf, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
+  useSiteSettings, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
   type StyleKey, type DeliveryKey,
 } from "@/lib/settings";
 
@@ -50,48 +51,16 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const u = (id: string) => `https://images.unsplash.com/${id}?w=640&q=75&auto=format`;
-const HERO_IMAGES = [
-  { src: u("photo-1455390582262-044cdead277a"), alt: "Handwritten notes in an open notebook" },
-  { src: u("photo-1517842645767-c639042777db"), alt: "Notebook and pen on a desk" },
-  { src: u("photo-1456735190827-d1262f71b8a3"), alt: "Colourful pens and stationery" },
-  { src: u("photo-1503676260728-1c00da094a0b"), alt: "Student studying with books" },
-  { src: u("photo-1434030216411-0b793f4b4173"), alt: "Hand writing on lined paper" },
-  { src: u("photo-1488190211105-8b0e65b80b4e"), alt: "Writing notes at a desk" },
-];
+const bundledSamplePaths = Object.keys(import.meta.glob("/public/samples/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}")).map((path) => path.replace(/^\/public/, "")).sort();
+const imageAvailable = (src: string) => /^https?:\/\//i.test(src) || bundledSamplePaths.includes(src);
+const SERVICE_ICONS: Record<string, typeof BookOpen> = {
+  "book-open": BookOpen, "graduation-cap": GraduationCap, "flask-conical": FlaskConical,
+  "folder-kanban": FolderKanban, "message-square-text": MessageSquareText, feather: Feather,
+  palette: Palette, sparkles: Sparkles,
+};
 
-const samplePaths = Object.keys(import.meta.glob("/public/samples/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}")).sort();
-const sampleImages = samplePaths.map((path) => {
-  const filename = path.split("/").at(-1) ?? "";
-  const [style = "Handwriting", pageType = "Assignment page"] = filename.replace(/\.[^.]+$/, "").split("--").map((part) => part.replace(/[-_]/g, " "));
-  const caption = SAMPLE_CAPTIONS[filename] ?? { style, pageType };
-  return { src: path.replace(/^\/public/, ""), alt: `${caption.style} — ${caption.pageType}`, ...caption };
-});
-
-function useLimitedOffer() {
-  const [active, setActive] = useState(() => Boolean(OFFER_END_DATE && Number.isFinite(Date.parse(OFFER_END_DATE)) && Date.parse(OFFER_END_DATE) > Date.now()));
-  useEffect(() => {
-    if (!OFFER_END_DATE) return;
-    const update = () => setActive(Number.isFinite(Date.parse(OFFER_END_DATE)) && Date.parse(OFFER_END_DATE) > Date.now());
-    const timer = window.setInterval(update, 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
-  return active;
-}
-
-const SERVICES = [
-  { icon: BookOpen, name: "School Assignments" },
-  { icon: GraduationCap, name: "College & University Assignments" },
-  { icon: FlaskConical, name: "Practical Record Writing" },
-  { icon: FolderKanban, name: "Project Writing" },
-  { icon: MessageSquareText, name: "Notes, Copywriting & Handwritten Questions and Answers" },
-  { icon: Feather, name: "Cursive and Beautiful Handwriting" },
-  { icon: Palette, name: "File Covers and Decorative Titles" },
-  { icon: Sparkles, name: "Custom Written Work according to your requirements" },
-];
-
-function useWa() {
-  return (text?: string) => waLinkTo(WHATSAPP_NUMBER, text);
+function useWa(number: string) {
+  return (text?: string) => waLinkTo(number || WHATSAPP_NUMBER, text);
 }
 
 function Section({ id, title, children, ruled }: { id?: string; title: string; children: React.ReactNode; ruled?: boolean }) {
@@ -111,19 +80,41 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 
 function Index() {
   const st = useSiteSettings();
-  const limitedOffer = useLimitedOffer();
-  const showLaunchPrice = limitedOffer && Boolean(OFFER_END_DATE && Date.parse(OFFER_END_DATE) > Date.now());
+  const content = useSiteContent();
+  const showLaunchPrice = st.offer_active && Boolean(content.offerEndDate && Number.isFinite(Date.parse(content.offerEndDate)) && Date.parse(content.offerEndDate) > Date.now());
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
+
+  useEffect(() => {
+    document.title = content.seoTitle;
+    let icon = document.head.querySelector('link[rel~="icon"]') as HTMLLinkElement | null;
+    if (!icon) { icon = document.createElement("link"); icon.rel = "icon"; document.head.appendChild(icon); }
+    if (content.faviconUrl.trim()) icon.href = content.faviconUrl;
+    const setMeta = (selector: string, name: string, value: string) => {
+      let element = document.head.querySelector(selector) as HTMLMetaElement | null;
+      if (!element) { element = document.createElement("meta"); document.head.appendChild(element); }
+      element.setAttribute(name, value);
+    };
+    setMeta('meta[name="description"]', "name", content.seoDescription);
+    setMeta('meta[property="og:title"]', "property", content.seoTitle);
+    setMeta('meta[property="og:description"]', "property", content.seoDescription);
+    setMeta('meta[name="twitter:title"]', "name", content.seoTitle);
+    setMeta('meta[name="twitter:description"]', "name", content.seoDescription);
+    const structured = document.head.querySelector('script[type="application/ld+json"]');
+    if (structured) structured.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": [
+      { "@type": "LocalBusiness", "@id": "https://prettyhandwrittenwork.lovable.app/#business", name: content.brandName, url: "https://prettyhandwrittenwork.lovable.app/", description: content.seoDescription, areaServed: { "@type": "Country", name: "India" }, sameAs: [content.instagramUrl] },
+      { "@type": "FAQPage", mainEntity: content.faqItems.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
+    ] });
+  }, [content]);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="relative z-10 border-b border-border/70 bg-background/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
-          <a href="#top" className="flex min-w-0 items-center gap-3" aria-label={BRAND_NAME + " home"}>
+          <a href="#top" className="flex min-w-0 items-center gap-3" aria-label={content.brandName + " home"}>
             <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-secondary text-foreground" aria-hidden>
               <BookOpen className="size-6" />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-bold tracking-tight sm:text-base">{BRAND_NAME}</span>
+              <span className="block truncate text-sm font-bold tracking-tight sm:text-base">{content.brandName}</span>
               <span className="hidden text-xs text-muted-foreground sm:block">Handwritten work, made neat</span>
             </span>
           </a>
@@ -134,11 +125,11 @@ function Index() {
         </div>
       </header>
       <div id="top">
-      <ImageStreamHero images={HERO_IMAGES}>
+      <ImageStreamHero images={content.heroImages}>
         <div className="fade-up mx-4 max-w-2xl rounded-3xl border border-white/30 bg-background/85 p-7 text-center shadow-xl backdrop-blur-md md:p-10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Handwritten assignments in India</p>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">Handwritten assignments in India, beautifully done.</h1>
-          <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground md:text-base">Neat, consistent handwriting for school, college and university work — with clear pricing and delivery options.</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{content.heroEyebrow}</p>
+          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">{content.heroHeading}</h1>
+          <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground md:text-base">{content.heroDescription}</p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="min-h-12 rounded-full px-7 shadow-sm">
               <a href="#order"><NotebookPen className="mr-2 size-5" aria-hidden />Place your order</a>
@@ -152,14 +143,14 @@ function Index() {
 
       <Section title="About our handwritten assignments in India" ruled>
         <div className="grid items-center gap-6 md:grid-cols-[220px_1fr]">
-          <div className="grid aspect-[4/5] place-items-center rounded-2xl border-2 border-dashed border-border bg-card p-5 text-center text-sm text-muted-foreground">
-            <div><NotebookPen className="mx-auto mb-3 size-8" aria-hidden /><span>Personal photo slot</span><span className="mt-1 block text-xs">Add your photo here</span></div>
+          <div className="overflow-hidden rounded-2xl border bg-card">
+            {content.aboutPhotoUrl ? <img src={content.aboutPhotoUrl} alt={content.brandName + " owner"} loading="lazy" width={600} height={750} className="aspect-[4/5] w-full object-cover" /> : <div className="grid aspect-[4/5] place-items-center p-5 text-center text-sm text-muted-foreground"><div><NotebookPen className="mx-auto mb-3 size-8" aria-hidden /><span>Personal photo slot</span><span className="mt-1 block text-xs">Add a photo URL in Admin → Website</span></div></div>}
           </div>
           <div>
-            <p className="text-lg leading-8">{ABOUT_STORY}</p>
+            <p className="text-lg leading-8">{content.aboutStory}</p>
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <Card className="text-center"><p className="font-hand text-4xl font-bold">{EXPERIENCE_YEARS}+</p><p className="text-sm text-muted-foreground">Years of experience</p></Card>
-              <Card className="text-center"><p className="font-hand text-4xl font-bold">{ORDERS_DELIVERED}+</p><p className="text-sm text-muted-foreground">Orders delivered</p></Card>
+              <Card className="text-center"><p className="font-hand text-4xl font-bold">{content.experienceYears}+</p><p className="text-sm text-muted-foreground">Years of experience</p></Card>
+              <Card className="text-center"><p className="font-hand text-4xl font-bold">{content.ordersDelivered}+</p><p className="text-sm text-muted-foreground">Orders delivered</p></Card>
             </div>
           </div>
         </div>
@@ -167,29 +158,29 @@ function Index() {
 
       <Section title="Handwritten assignment services in India">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
-          {SERVICES.map(({ icon: Icon, name }) => (
+          {content.services.map(({ icon, name }, i) => { const Icon = SERVICE_ICONS[icon] ?? [BookOpen, GraduationCap, FlaskConical, FolderKanban, MessageSquareText, Feather, Palette, Sparkles][i % 8]!; return (
             <Card key={name} className="flex flex-col items-center gap-3 text-center">
               <span className="grid size-12 place-items-center rounded-full bg-secondary"><Icon className="size-6" aria-hidden /></span>
               <span className="text-sm font-medium md:text-base">{name}</span>
             </Card>
-          ))}
+          ); })}
         </div>
       </Section>
 
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name="Basic Running Handwriting" unit="/page" price={showLaunchPrice ? 6 : st.price_basic} was={showLaunchPrice ? 8 : undefined} limitedOffer={showLaunchPrice} offerEndDate={OFFER_END_DATE} sample={HANDWRITING_SAMPLE_SLOTS[0]} />
-          <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} sample={HANDWRITING_SAMPLE_SLOTS[1]} />
-          <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} sample={HANDWRITING_SAMPLE_SLOTS[2]} />
-          <PriceCard name="File Cover" unit="/cover" price={st.price_cover} sample={HANDWRITING_SAMPLE_SLOTS[3]} />
-          <PriceCard name="Projects" prefix="Starting from " price={st.price_project_from} sample={HANDWRITING_SAMPLE_SLOTS[4]} />
+          <PriceCard name={content.pricingLabels.basic} unit="/page" price={showLaunchPrice ? st.price_basic_offer : st.price_basic} was={showLaunchPrice ? st.price_basic : undefined} limitedOffer={showLaunchPrice} offerEndDate={content.offerEndDate} sample={content.pricingSamples[0] ?? { label: content.pricingLabels.basic, src: "" }} />
+          <PriceCard name={content.pricingLabels.cursive} unit="/page" price={st.price_cursive} sample={content.pricingSamples[1] ?? { label: content.pricingLabels.cursive, src: "" }} />
+          <PriceCard name={content.pricingLabels.neat} unit="/page" price={st.price_neat} sample={content.pricingSamples[2] ?? { label: content.pricingLabels.neat, src: "" }} />
+          <PriceCard name={content.pricingLabels.cover} unit="/cover" price={st.price_cover} sample={content.pricingSamples[3] ?? { label: content.pricingLabels.cover, src: "" }} />
+          <PriceCard name={content.pricingLabels.project} prefix="Starting from " price={st.price_project_from} sample={content.pricingSamples[4] ?? { label: content.pricingLabels.project, src: "" }} />
         </div>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">Prices are per page unless noted. Minimum order ₹120; shipping is free above ₹800. Projects are quoted based on requirements.</p>
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">Prices are per page unless noted. Minimum order ₹{content.minimumOrder}; shipping is free above ₹{content.freeShippingThreshold}. Projects are quoted based on requirements.</p>
       </Section>
 
       <Section title="Delivery options">
         <div className="grid gap-4 md:grid-cols-3">
-          <Card><Truck className="mb-3 size-7 text-ink" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical Delivery</h3><p className="mt-2 text-sm">Handwritten pages couriered all over India. {SHIPPING_TEXT} Orders above ₹800 ship free.</p></Card>
+          <Card><Truck className="mb-3 size-7 text-ink" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical Delivery</h3><p className="mt-2 text-sm">Handwritten pages couriered all over India. {SHIPPING_TEXT} Orders above ₹{content.freeShippingThreshold} ship free.</p></Card>
           <Card><FileText className="mb-3 size-7" aria-hidden /><h3 className="font-hand text-3xl font-bold">PDF Only</h3><p className="mt-2 text-sm">A clear scan sent on WhatsApp or email. Same per-page rate, no shipping.</p></Card>
           <Card><Layers className="mb-3 size-7" aria-hidden /><h3 className="font-hand text-3xl font-bold">Physical + PDF</h3><p className="mt-2 text-sm">Get both the pages and a scan. Scan add-on of ₹{st.pdf_addon_per_page}/page.</p></Card>
         </div>
@@ -210,10 +201,10 @@ function Index() {
 
       <Section title="Testimonials">
         <div className="grid gap-4 md:grid-cols-3">
-          {TESTIMONIALS.map((item, i) => (
+          {content.testimonials.map((item, i) => (
             // Replace each placeholder with permissioned, genuine customer feedback before publishing.
             <Card key={i}>
-              <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>
+              {(item.name === "Student name" || item.quote.startsWith("Replace with a genuine")) && <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>}
               <blockquote className="text-sm leading-6">“{item.quote}”</blockquote>
               <p className="mt-4 font-semibold">{item.name}</p>
               <p className="text-sm text-muted-foreground">{item.education}</p>
@@ -224,19 +215,15 @@ function Index() {
 
       <Section title="Why choose us">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {[
-            [Feather, "Neat & consistent handwriting"], [IndianRupee, "Affordable prices"], [Package, "Careful packaging"],
-            [Clock, "On-time delivery"], [MapPin, "Pan-India shipping"], [ShieldCheck, "Privacy of your work"],
-          ].map(([Icon, t]) => {
-            const I = Icon as typeof Feather;
-            return <Card key={t as string} className="flex items-center gap-3"><I className="size-6 shrink-0" aria-hidden /><span className="text-sm font-medium">{t as string}</span></Card>;
+          {content.whyChooseUs.map((t, i) => { const Icons = [Feather, IndianRupee, Package, Clock, MapPin, ShieldCheck]; const I = Icons[i % Icons.length]!;
+            return <Card key={t} className="flex items-center gap-3"><I className="size-6 shrink-0" aria-hidden /><span className="text-sm font-medium">{t}</span></Card>;
           })}
         </div>
       </Section>
 
       <Section title="FAQ" ruled>
         <Accordion type="single" collapsible={false} defaultValue="q0" className="mx-auto max-w-2xl rounded-2xl border bg-card px-5 shadow-paper">
-          {FAQ_ITEMS.map(([q, a], i) => (
+          {content.faqItems.map(({ question: q, answer: a }, i) => (
             <AccordionItem key={q} value={`q${i}`}>
               <AccordionTrigger className="text-left">{q}</AccordionTrigger>
               <AccordionContent>{a}</AccordionContent>
@@ -248,18 +235,18 @@ function Index() {
       <footer className="border-t bg-card px-5 py-10 text-center">
         <div className="mx-auto flex max-w-xs items-center justify-center gap-3">
           <span className="grid size-10 place-items-center rounded-xl border border-border bg-secondary" aria-hidden><BookOpen className="size-5" /></span>
-          <p className="text-lg font-bold tracking-tight">{BRAND_NAME}</p>
+          <p className="text-lg font-bold tracking-tight">{content.brandName}</p>
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-center gap-5">
           <a href="#order" className="font-medium underline underline-offset-4">Place your order</a>
-          <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Instagram className="size-4" aria-hidden />Instagram</a>
-          <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Mail className="size-4" aria-hidden />Email</a>
+          <a href={content.instagramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Instagram className="size-4" aria-hidden />Instagram</a>
+          <a href={`mailto:${content.contactEmail}`} className="inline-flex items-center gap-2 text-sm underline underline-offset-4"><Mail className="size-4" aria-hidden />Email</a>
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">© {new Date().getFullYear()} {BRAND_NAME}</p>
+        <p className="mt-3 text-sm text-muted-foreground">© {new Date().getFullYear()} {content.brandName}</p>
         <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">We provide handwriting and copying services only for content you submit yourself.</p>
       </footer>
 
-      <a href={waLinkTo(WHATSAPP_NUMBER, "Hi! I have a question about handwritten assignments.")} target="_blank" rel="noreferrer" aria-label="Chat with us on WhatsApp"
+      <a href={waLinkTo(st.whatsapp_number, "Hi! I have a question about handwritten assignments.")} target="_blank" rel="noreferrer" aria-label="Chat with us on WhatsApp"
         className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-40 inline-flex size-14 items-center justify-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-xl transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:bottom-6 sm:right-6">
         <MessageCircle className="size-7" aria-hidden />
       </a>
@@ -272,7 +259,7 @@ function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = fa
   name: string; price: number; unit?: string; was?: number; prefix?: string; limitedOffer?: boolean;
   offerEndDate?: string | null; sample: { label: string; src: string };
 }) {
-  const sampleExists = sampleImages.some((image) => image.src === sample.src);
+  const sampleExists = imageAvailable(sample.src);
   const showOffer = limitedOffer && Boolean(offerEndDate && Date.parse(offerEndDate) > Date.now()) && was !== undefined && was !== price;
   return (
     <Card className="relative">
@@ -295,21 +282,23 @@ const selectCls = "flex h-12 w-full rounded-md border border-input bg-card px-3 
 
 function Estimator() {
   const st = useSiteSettings();
+  const content = useSiteContent();
   const [style, setStyle] = useState<StyleKey>("basic");
   const [pages, setPages] = useState(10);
   const [covers, setCovers] = useState(0);
   const [delivery, setDelivery] = useState<DeliveryKey>("physical");
+  const offerValid = st.offer_active && Boolean(content.offerEndDate && Number.isFinite(Date.parse(content.offerEndDate)) && Date.parse(content.offerEndDate) > Date.now());
   const calc = useMemo(() => {
     const p = Math.max(0, pages || 0), c = Math.max(0, covers || 0);
-    const writing = p * (style === "basic" && OFFER_END_DATE && Date.parse(OFFER_END_DATE) > Date.now() ? 6 : rateFor(st, style));
+    const writing = p * (style === "basic" ? (offerValid ? st.price_basic_offer : st.price_basic) : rateFor(st, style));
     const coverCost = c * st.price_cover;
     const scan = delivery === "both" ? p * st.pdf_addon_per_page : 0;
     const sub = writing + coverCost + scan;
-    const minimumAdjustment = Math.max(0, 120 - sub);
-    const subtotal = Math.max(120, sub);
-    const shipping = delivery === "pdf" || subtotal > 800 ? 0 : st.shipping_min;
+    const minimumAdjustment = Math.max(0, content.minimumOrder - sub);
+    const subtotal = Math.max(content.minimumOrder, sub);
+    const shipping = delivery === "pdf" || subtotal > content.freeShippingThreshold ? 0 : st.shipping_min;
     return { writing, coverCost, scan, minimumAdjustment, shipping, total: subtotal + shipping };
-  }, [style, pages, covers, delivery, st]);
+  }, [style, pages, covers, delivery, st, content, offerValid]);
 
   return (
     <Section id="estimate" title="Price estimator" ruled>
@@ -317,7 +306,7 @@ function Estimator() {
         <div className="space-y-4">
           <div><Label htmlFor="e-style">Writing style</Label>
             <select id="e-style" className={selectCls} value={style} onChange={(e) => setStyle(e.target.value as StyleKey)}>
-              {Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v} (₹{rateFor(st, k as StyleKey)}/page)</option>)}
+              {Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v} (₹{k === "basic" ? (offerValid ? st.price_basic_offer : st.price_basic) : rateFor(st, k as StyleKey)}/page)</option>)}
             </select></div>
           <div><Label htmlFor="e-pages">Number of pages</Label><Input id="e-pages" type="number" min={0} className="h-12" value={pages} onChange={(e) => setPages(+e.target.value)} /></div>
           <div><Label htmlFor="e-covers">File covers</Label><Input id="e-covers" type="number" min={0} className="h-12" value={covers} onChange={(e) => setCovers(+e.target.value)} /></div>
@@ -332,12 +321,12 @@ function Estimator() {
             <div className="flex justify-between"><dt>File covers</dt><dd>₹{calc.coverCost}</dd></div>
             {delivery === "both" && <div className="flex justify-between gap-3"><dt>Scan add-on (₹{st.pdf_addon_per_page}/page)</dt><dd>₹{calc.scan}</dd></div>}
             {calc.minimumAdjustment > 0 && <div className="flex justify-between"><dt>Minimum order adjustment</dt><dd>₹{calc.minimumAdjustment}</dd></div>}
-            {delivery !== "pdf" && <div className="flex justify-between"><dt>{calc.shipping === 0 ? "Shipping (free over ₹800)" : "Estimated shipping"}</dt><dd>{calc.shipping === 0 ? "Free" : `₹${calc.shipping}`}</dd></div>}
+            {delivery !== "pdf" && <div className="flex justify-between"><dt>{calc.shipping === 0 ? `Shipping (free over ₹${content.freeShippingThreshold})` : "Estimated shipping"}</dt><dd>{calc.shipping === 0 ? "Free" : `₹${calc.shipping}`}</dd></div>}
           </dl>
           <div className="mt-4 border-t border-ink/20 pt-4">
             <p className="text-sm">Estimated total</p>
             <p className="font-hand text-5xl font-bold">₹{calc.total}</p>
-            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : calc.shipping === 0 ? "Free shipping on orders above ₹800." : "Estimated shipping; final fee confirmed on WhatsApp."}</p>
+            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : calc.shipping === 0 ? `Free shipping on orders above ₹${content.freeShippingThreshold}.` : "Estimated shipping; final fee confirmed on WhatsApp."}</p>
             <p className="mt-2 text-xs text-muted-foreground">Projects: starting from ₹{st.price_project_from}, chat for a quote.</p>
           </div>
         </div>
@@ -371,12 +360,14 @@ function Field({ k, label, children, error }: { k: string; label: string; childr
 }
 
 function OrderForm() {
+  const st = useSiteSettings();
+  const content = useSiteContent();
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { style: "basic", delivery: "physical", pages: 10, covers: 0, work: "", city: "", state: "", pin: "" },
   });
   const delivery = watch("delivery");
-  const waLink = useWa();
+  const waLink = useWa(st.whatsapp_number);
   const [saving, setSaving] = useState(false);
   const onSubmit = async (raw: FormValues) => {
     const d = schema.parse(raw);
@@ -401,8 +392,8 @@ function OrderForm() {
       `*City:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.city}`,
       `*State:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.state}`,
       `*PIN code:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.pin}`,
-      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, `*Scan add-on:* ${d.delivery === "both" ? "₹1/page" : "No"}`, `*Location:* ${d.delivery === "pdf" ? "Digital delivery only" : `${d.city}, ${d.state} ${d.pin}`}`, "",
-      "*Price note:* Minimum order ₹120. Shipping is free only above ₹800; final shipping is confirmed on WhatsApp.", "",
+      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, `*Scan add-on:* ${d.delivery === "both" ? `₹${st.pdf_addon_per_page}/page` : "No"}`, `*Location:* ${d.delivery === "pdf" ? "Digital delivery only" : `${d.city}, ${d.state} ${d.pin}`}`, "",
+      `*Price note:* Minimum order ₹${content.minimumOrder}. Shipping is free only above ₹${content.freeShippingThreshold}; final shipping is confirmed on WhatsApp.`, "",
       "I will share reference files in this chat.",
     ].filter((l) => l !== null);
     window.location.href = waLink(lines.join("\n"));
@@ -415,7 +406,7 @@ function OrderForm() {
           <F k="name" label="Name"><Input id="f-name" className="h-12" autoComplete="name" {...register("name")} /></F>
           <F k="phone" label="WhatsApp number"><Input id="f-phone" className="h-12" inputMode="numeric" maxLength={10} placeholder="10 digits" {...register("phone")} /></F>
           <F k="work" label="Subject / Work type">
-            <select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{SERVICES.map((s) => <option key={s.name}>{s.name}</option>)}</select>
+            <select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{content.services.map((s) => <option key={s.name}>{s.name}</option>)}</select>
           </F>
           <F k="style" label="Writing style">
             <select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
@@ -445,7 +436,13 @@ function OrderForm() {
 }
 
 function Samples() {
+  const content = useSiteContent();
   const [open, setOpen] = useState<number | null>(null);
+  const sampleImages = content.gallerySamples.length ? content.gallerySamples.filter((x) => x.src.trim()).map((x) => ({ ...x, alt: `${x.style} — ${x.pageType}` })) : bundledSamplePaths.map((src) => {
+    const filename = src.split("/").at(-1) ?? "";
+    const [style = "Handwriting", pageType = "Assignment page"] = filename.replace(/\.[^.]+$/, "").split("--").map((part) => part.replace(/[-_]/g, " "));
+    return { src, style, pageType, alt: `${style} — ${pageType}` };
+  });
   const current = open !== null ? sampleImages[open] : undefined;
   if (sampleImages.length === 0) return null;
   return (
