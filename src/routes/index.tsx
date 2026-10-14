@@ -211,6 +211,7 @@ function Index() {
       <Section title="Testimonials">
         <div className="grid gap-4 md:grid-cols-3">
           {TESTIMONIALS.map((item, i) => (
+            // Replace each placeholder with permissioned, genuine customer feedback before publishing.
             <Card key={i}>
               <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>
               <blockquote className="text-sm leading-6">“{item.quote}”</blockquote>
