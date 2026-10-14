@@ -86,6 +86,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/website': typeof AdminWebsiteRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
