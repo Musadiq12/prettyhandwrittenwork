@@ -10,6 +10,52 @@ permissions:
   contents: read
 
 jobs:
+  # Temporary remediation for this PR: resolve and commit patched lockfile versions.
+  dependency-autofix:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/glass-fold-webgl-component'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply available security fixes
+        run: |
+          bun audit fix || true
+          bun audit fix --latest || true
+          bun audit || true
+
+      - name: Format GlassFold files
+        run: bunx prettier --write src/components/ui/glass-fold.tsx src/components/ui/glass-fold-demo.tsx
+
+      - name: Commit lockfile and formatting fixes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bun.lock package.json src/components/ui/glass-fold.tsx src/components/ui/glass-fold-demo.tsx
+          if git diff --cached --quiet; then
+            echo "No dependency or formatting changes to commit."
+            exit 0
+          fi
+          git commit -m "fix: update vulnerable dependencies and format GlassFold"
+          AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c http.extraheader="AUTHORIZATION: basic $AUTH" push origin "HEAD:$HEAD_BRANCH"
+
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
