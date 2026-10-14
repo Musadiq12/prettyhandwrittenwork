@@ -98,8 +98,6 @@ function useWa() {
   return (text?: string) => waLinkTo(s.whatsapp_number, text);
 }
 
-const ORDER_MSG = "Hi! I'd like to order handwritten work from Pretty Handwritten Work ✍️";
-
 function Section({ id, title, children, ruled }: { id?: string; title: string; children: React.ReactNode; ruled?: boolean }) {
   return (
     <section id={id} className={`scroll-mt-4 px-5 py-14 md:py-20 ${ruled ? "ruled" : ""}`}>
@@ -115,32 +113,41 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
   return <div className={`rounded-2xl border bg-card p-5 shadow-paper ${className}`}>{children}</div>;
 }
 
-function WaButton({ className = "", children = "Order on WhatsApp" }: { className?: string; children?: React.ReactNode }) {
-  const waLink = useWa();
-  return (
-    <a href={waLink(ORDER_MSG)} target="_blank" rel="noopener noreferrer"
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${className}`}>
-      <MessageCircle className="size-5" aria-hidden /> {children}
-    </a>
-  );
-}
-
 function Index() {
   const st = useSiteSettings();
-  const waLink = useWa();
   const limitedOffer = useLimitedOffer();
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
-    <div>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="relative z-10 border-b border-border/70 bg-background/95">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
+          <a href="#top" className="flex min-w-0 items-center gap-3" aria-label={BRAND_NAME + " home"}>
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-secondary text-foreground" aria-hidden>
+              <BookOpen className="size-6" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold tracking-tight sm:text-base">{BRAND_NAME}</span>
+              <span className="hidden text-xs text-muted-foreground sm:block">Handwritten work, made neat</span>
+            </span>
+          </a>
+          <nav className="flex shrink-0 items-center gap-4 text-sm font-medium sm:gap-6">
+            <a href="#prices" className="text-muted-foreground transition hover:text-foreground">Prices</a>
+            <a href="#order" className="rounded-full bg-primary px-4 py-2.5 text-primary-foreground transition hover:opacity-90">Place your order</a>
+          </nav>
+        </div>
+      </header>
+      <div id="top">
       <ImageStreamHero images={HERO_IMAGES}>
-        <div className="fade-up max-w-xl rounded-3xl bg-background/60 p-6 text-center backdrop-blur-sm md:p-8">
-          <p className="font-hand text-2xl text-muted-foreground">{BRAND_NAME} ✍️📚</p>
-          <h1 className="mt-1 font-hand text-5xl font-bold leading-tight md:text-6xl">Pretty handwritten assignments in India</h1>
-          <p className="mt-3 text-sm font-medium md:text-base">Neat Handwriting • Affordable Prices • Made with Care</p>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <WaButton />
-            <Button asChild variant="outline" size="lg" className="min-h-12 rounded-full border-ink bg-transparent px-6">
-              <a href="#prices">See Prices</a>
+        <div className="fade-up mx-4 max-w-2xl rounded-3xl border border-white/30 bg-background/85 p-7 text-center shadow-xl backdrop-blur-md md:p-10">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Handwritten work across India</p>
+          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">Beautifully handwritten assignments, without the hassle.</h1>
+          <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground md:text-base">Neat, consistent handwriting for school, college and university work — with clear pricing and delivery options.</p>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button asChild size="lg" className="min-h-12 rounded-full px-7 shadow-sm">
+              <a href="#order"><NotebookPen className="mr-2 size-5" aria-hidden />Place your order</a>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="min-h-12 rounded-full border-border bg-background/70 px-7">
+              <a href="#prices">View pricing</a>
             </Button>
           </div>
         </div>
@@ -234,16 +241,20 @@ function Index() {
       </Section>
 
       <footer className="border-t bg-card px-5 py-10 text-center">
-        <p className="font-hand text-3xl font-bold">{BRAND_NAME} ✍️📚</p>
-        <a href={waLink(ORDER_MSG)} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block underline underline-offset-4">Chat on WhatsApp</a>
-        <p className="mt-3 text-sm">Made with care ❤️ · © {new Date().getFullYear()}</p>
+        <div className="mx-auto flex max-w-xs items-center justify-center gap-3">
+          <span className="grid size-10 place-items-center rounded-xl border border-border bg-secondary" aria-hidden><BookOpen className="size-5" /></span>
+          <p className="text-lg font-bold tracking-tight">{BRAND_NAME}</p>
+        </div>
+        <a href="#order" className="mt-4 inline-block font-medium underline underline-offset-4">Place your order</a>
+        <p className="mt-3 text-sm text-muted-foreground">© {new Date().getFullYear()} {BRAND_NAME}</p>
         <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">We provide handwriting and copying services only for content you submit yourself.</p>
       </footer>
 
-      <a href={waLink(ORDER_MSG)} target="_blank" rel="noopener noreferrer" aria-label="Order on WhatsApp"
-        className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-40 grid size-16 place-items-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-paper transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <MessageCircle className="size-8" aria-hidden />
+      <a href="#order" aria-label="Place your order"
+        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-xl transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:bottom-6 sm:right-6">
+        <NotebookPen className="size-4" aria-hidden /> <span>Place your order</span>
       </a>
+      </div>
     </div>
   );
 }
@@ -399,10 +410,10 @@ function OrderForm() {
           </>}
           <div className="sm:col-span-2"><F k="notes" label="Notes / special instructions"><Textarea id="f-notes" rows={4} {...register("notes")} /></F></div>
           <div className="sm:col-span-2">
-            <Button type="submit" disabled={saving} className="min-h-12 w-full rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper hover:bg-whatsapp hover:brightness-110">
-              <MessageCircle className="size-5" aria-hidden /> {saving ? "Saving…" : "Send order on WhatsApp"}
+            <Button type="submit" disabled={saving} className="min-h-12 w-full rounded-full px-6 font-semibold shadow-sm">
+              <MessageCircle className="size-5" aria-hidden /> {saving ? "Saving order…" : "Submit order & continue to WhatsApp"}
             </Button>
-            <p className="mt-3 text-center text-sm text-muted-foreground">Send your reference files, photos or PDFs in the WhatsApp chat after this.</p>
+            <p className="mt-3 text-center text-sm text-muted-foreground">Your order details will be saved first, then WhatsApp will open with a pre-filled message. You can attach reference files there.</p>
           </div>
         </form>
       </Card>
