@@ -91,7 +91,7 @@ function Index() {
     if (content.faviconUrl.trim()) icon.href = content.faviconUrl;
     const setMeta = (selector: string, name: string, value: string) => {
       let element = document.head.querySelector(selector) as HTMLMetaElement | null;
-      if (!element) { element = document.createElement("meta"); element.setAttribute("name", name); document.head.appendChild(element); }
+      if (!element) { element = document.createElement("meta"); document.head.appendChild(element); }
       element.setAttribute(name, value);
     };
     setMeta('meta[name="description"]', "name", content.seoDescription);
