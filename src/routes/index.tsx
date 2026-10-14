@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { BRAND_NAME, INSTAGRAM_URL, FAQ_ITEMS, HANDWRITING_SAMPLE_SLOTS, WHATSAPP_NUMBER, waLinkTo } from "@/config";
+import { BRAND_NAME, INSTAGRAM_URL, FAQ_ITEMS, WHATSAPP_NUMBER, waLinkTo } from "@/config";
 import { useSiteContent } from "@/lib/site-content";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -167,11 +167,11 @@ function Index() {
 
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name={content.pricingLabels.basic} unit="/page" price={showLaunchPrice ? st.price_basic_offer : st.price_basic} was={showLaunchPrice ? st.price_basic : undefined} limitedOffer={showLaunchPrice} offerEndDate={content.offerEndDate} sample={content.pricingSamples[0] ?? HANDWRITING_SAMPLE_SLOTS[0]} />
-          <PriceCard name={content.pricingLabels.cursive} unit="/page" price={st.price_cursive} sample={content.pricingSamples[1] ?? HANDWRITING_SAMPLE_SLOTS[1]} />
-          <PriceCard name={content.pricingLabels.neat} unit="/page" price={st.price_neat} sample={content.pricingSamples[2] ?? HANDWRITING_SAMPLE_SLOTS[2]} />
-          <PriceCard name={content.pricingLabels.cover} unit="/cover" price={st.price_cover} sample={content.pricingSamples[3] ?? HANDWRITING_SAMPLE_SLOTS[3]} />
-          <PriceCard name={content.pricingLabels.project} prefix="Starting from " price={st.price_project_from} sample={content.pricingSamples[4] ?? HANDWRITING_SAMPLE_SLOTS[4]} />
+          <PriceCard name={content.pricingLabels.basic} unit="/page" price={showLaunchPrice ? st.price_basic_offer : st.price_basic} was={showLaunchPrice ? st.price_basic : undefined} limitedOffer={showLaunchPrice} offerEndDate={content.offerEndDate} sample={content.pricingSamples[0] ?? { label: content.pricingLabels.basic, src: "" }} />
+          <PriceCard name={content.pricingLabels.cursive} unit="/page" price={st.price_cursive} sample={content.pricingSamples[1] ?? { label: content.pricingLabels.cursive, src: "" }} />
+          <PriceCard name={content.pricingLabels.neat} unit="/page" price={st.price_neat} sample={content.pricingSamples[2] ?? { label: content.pricingLabels.neat, src: "" }} />
+          <PriceCard name={content.pricingLabels.cover} unit="/cover" price={st.price_cover} sample={content.pricingSamples[3] ?? { label: content.pricingLabels.cover, src: "" }} />
+          <PriceCard name={content.pricingLabels.project} prefix="Starting from " price={st.price_project_from} sample={content.pricingSamples[4] ?? { label: content.pricingLabels.project, src: "" }} />
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">Prices are per page unless noted. Minimum order ₹{content.minimumOrder}; shipping is free above ₹{content.freeShippingThreshold}. Projects are quoted based on requirements.</p>
       </Section>
