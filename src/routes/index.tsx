@@ -98,8 +98,6 @@ function useWa() {
   return (text?: string) => waLinkTo(s.whatsapp_number, text);
 }
 
-const ORDER_MSG = "Hi! I'd like to order handwritten work from Pretty Handwritten Work ✍️";
-
 function Section({ id, title, children, ruled }: { id?: string; title: string; children: React.ReactNode; ruled?: boolean }) {
   return (
     <section id={id} className={`scroll-mt-4 px-5 py-14 md:py-20 ${ruled ? "ruled" : ""}`}>
@@ -115,19 +113,8 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
   return <div className={`rounded-2xl border bg-card p-5 shadow-paper ${className}`}>{children}</div>;
 }
 
-function WaButton({ className = "", children = "Order on WhatsApp" }: { className?: string; children?: React.ReactNode }) {
-  const waLink = useWa();
-  return (
-    <a href={waLink(ORDER_MSG)} target="_blank" rel="noopener noreferrer"
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-whatsapp px-6 font-semibold text-whatsapp-foreground shadow-paper transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${className}`}>
-      <MessageCircle className="size-5" aria-hidden /> {children}
-    </a>
-  );
-}
-
 function Index() {
   const st = useSiteSettings();
-  const waLink = useWa();
   const limitedOffer = useLimitedOffer();
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
