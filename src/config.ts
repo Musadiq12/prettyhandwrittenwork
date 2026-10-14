@@ -47,12 +47,5 @@ export type SiteSettings = typeof DEFAULT_SETTINGS;
 // Optional captions keyed by filename. Otherwise use style--page-type.jpg filenames.
 export const SAMPLE_CAPTIONS: Record<string, { style: string; pageType: string }> = {};
 
-// REPLACE all three placeholders with genuine customer testimonials before publishing.
-export const TESTIMONIALS = [
-  { name: "Student name", education: "Class / school", quote: "Your customer's feedback on their handwritten assignment goes here." },
-  { name: "Student name", education: "Course / college", quote: "Your customer's feedback on their practical records goes here." },
-  { name: "Student name", education: "Class / college", quote: "Your customer's feedback on their handwritten project goes here." },
-];
-
 export const waLinkTo = (number: string, text?: string) =>
   `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
