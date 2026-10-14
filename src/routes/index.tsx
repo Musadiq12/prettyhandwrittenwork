@@ -42,7 +42,7 @@ export const Route = createFileRoute("/")({
     scripts: [{ type: "application/ld+json", children: JSON.stringify({
       "@context": "https://schema.org", "@graph": [
         { "@type": "LocalBusiness", "@id": "https://prettyhandwrittenwork.lovable.app/#business", name: BRAND_NAME,
-          url: "https://prettyhandwrittenwork.lovable.app/", description: DESC, areaServed: { "@type": "Country", name: "India" } },
+          url: "https://prettyhandwrittenwork.lovable.app/", description: DESC, areaServed: { "@type": "Country", name: "India" }, sameAs: [INSTAGRAM_URL] },
         { "@type": "FAQPage", mainEntity: FAQ_ITEMS.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
       ],
     }) }],
