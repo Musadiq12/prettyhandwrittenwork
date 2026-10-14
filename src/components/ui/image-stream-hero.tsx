@@ -21,14 +21,14 @@ export function ImageStreamHero({ images, children, className }: ImageStreamHero
         {rows.map((row, r) => (
           <div key={r} className="stream-row" style={{ transform: `rotateX(${(1 - r) * 8}deg)` }}>
             <div className={cn("stream-track", r % 2 && "stream-reverse")}>
-              {[...row, ...row, ...row].map((img, i) => (
+              {[...row, ...row].map((img, i) => (
                 <img
                   key={i}
                   src={img.src}
                   alt={i < row.length ? img.alt : ""}
                   loading="lazy"
-                  width={800}
-                  height={533}
+                  width={320}
+                  height={213}
                   className="h-36 w-52 shrink-0 rounded-xl object-cover shadow-paper md:h-40 md:w-60"
                 />
               ))}
