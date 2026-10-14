@@ -302,11 +302,10 @@ function Estimator() {
     const coverCost = c * st.price_cover;
     const scan = delivery === "both" ? p * st.pdf_addon_per_page : 0;
     const sub = writing + coverCost + scan;
-    const discount = st.bulk_discount_percent > 0 && sub > st.bulk_discount_threshold ? Math.round((sub * st.bulk_discount_percent) / 100) : 0;
-    const minimumAdjustment = Math.max(0, 120 - (sub - discount));
-    const subtotal = Math.max(120, sub - discount);
-    const shipping = delivery === "pdf" || subtotal >= 800 ? 0 : st.shipping_min;
-    return { writing, coverCost, scan, discount, minimumAdjustment, shipping, total: subtotal + shipping };
+    const minimumAdjustment = Math.max(0, 120 - sub);
+    const subtotal = Math.max(120, sub);
+    const shipping = delivery === "pdf" || subtotal > 800 ? 0 : st.shipping_min;
+    return { writing, coverCost, scan, minimumAdjustment, shipping, total: subtotal + shipping };
   }, [style, pages, covers, delivery, st]);
 
   return (
@@ -329,14 +328,13 @@ function Estimator() {
             <div className="flex justify-between"><dt>Writing</dt><dd>₹{calc.writing}</dd></div>
             <div className="flex justify-between"><dt>File covers</dt><dd>₹{calc.coverCost}</dd></div>
             {delivery === "both" && <div className="flex justify-between gap-3"><dt>Scan add-on (₹{st.pdf_addon_per_page}/page)</dt><dd>₹{calc.scan}</dd></div>}
-            {calc.discount > 0 && <div className="flex justify-between"><dt>Bulk discount ({st.bulk_discount_percent}% over ₹{st.bulk_discount_threshold})</dt><dd>−₹{calc.discount}</dd></div>}
             {calc.minimumAdjustment > 0 && <div className="flex justify-between"><dt>Minimum order adjustment</dt><dd>₹{calc.minimumAdjustment}</dd></div>}
             {delivery !== "pdf" && <div className="flex justify-between"><dt>{calc.shipping === 0 ? "Shipping (free over ₹800)" : "Estimated shipping"}</dt><dd>{calc.shipping === 0 ? "Free" : `₹${calc.shipping}`}</dd></div>}
           </dl>
           <div className="mt-4 border-t border-ink/20 pt-4">
             <p className="text-sm">Estimated total</p>
             <p className="font-hand text-5xl font-bold">₹{calc.total}</p>
-            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : calc.shipping === 0 ? "Free shipping on orders above ₹800." : "Shipping estimate; final fee confirmed on WhatsApp."}</p>
+            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : calc.shipping === 0 ? "Free shipping on orders above ₹800." : "Estimated shipping; final fee confirmed on WhatsApp."}</p>
             <p className="mt-2 text-xs text-muted-foreground">Projects: starting from ₹{st.price_project_from}, chat for a quote.</p>
           </div>
         </div>
