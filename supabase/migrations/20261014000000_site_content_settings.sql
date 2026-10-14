@@ -37,7 +37,7 @@ values (1, '{
   "ordersDelivered": 100,
   "aboutStory": "I started this service to help students who need clear, carefully organised handwritten work without the last-minute stress. Every order is prepared with attention to legibility, neat presentation, and the instructions you provide.",
   "aboutPhotoUrl": "",
-  "faviconUrl": "/favicon.ico",
+  "faviconUrl": "/favicon.svg",
   "offerEndDate": "",
   "minimumOrder": 120,
   "freeShippingThreshold": 800,
