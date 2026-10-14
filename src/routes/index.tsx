@@ -199,7 +199,7 @@ function Index() {
           {content.testimonials.map((item, i) => (
             // Replace each placeholder with permissioned, genuine customer feedback before publishing.
             <Card key={i}>
-              <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>
+              {(item.name === "Student name" || item.quote.startsWith("Replace with a genuine")) && <p className="mb-3 text-xs text-muted-foreground">Placeholder — awaiting customer feedback</p>}
               <blockquote className="text-sm leading-6">“{item.quote}”</blockquote>
               <p className="mt-4 font-semibold">{item.name}</p>
               <p className="text-sm text-muted-foreground">{item.education}</p>
@@ -282,9 +282,9 @@ function Estimator() {
   const [pages, setPages] = useState(10);
   const [covers, setCovers] = useState(0);
   const [delivery, setDelivery] = useState<DeliveryKey>("physical");
+  const offerValid = st.offer_active && Boolean(content.offerEndDate && Number.isFinite(Date.parse(content.offerEndDate)) && Date.parse(content.offerEndDate) > Date.now());
   const calc = useMemo(() => {
     const p = Math.max(0, pages || 0), c = Math.max(0, covers || 0);
-    const offerValid = st.offer_active && Boolean(content.offerEndDate && Number.isFinite(Date.parse(content.offerEndDate)) && Date.parse(content.offerEndDate) > Date.now());
     const writing = p * (style === "basic" ? (offerValid ? st.price_basic_offer : st.price_basic) : rateFor(st, style));
     const coverCost = c * st.price_cover;
     const scan = delivery === "both" ? p * st.pdf_addon_per_page : 0;
@@ -293,7 +293,7 @@ function Estimator() {
     const subtotal = Math.max(content.minimumOrder, sub);
     const shipping = delivery === "pdf" || subtotal > content.freeShippingThreshold ? 0 : st.shipping_min;
     return { writing, coverCost, scan, minimumAdjustment, shipping, total: subtotal + shipping };
-  }, [style, pages, covers, delivery, st, content]);
+  }, [style, pages, covers, delivery, st, content, offerValid]);
 
   return (
     <Section id="estimate" title="Price estimator" ruled>
@@ -301,7 +301,7 @@ function Estimator() {
         <div className="space-y-4">
           <div><Label htmlFor="e-style">Writing style</Label>
             <select id="e-style" className={selectCls} value={style} onChange={(e) => setStyle(e.target.value as StyleKey)}>
-              {Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v} (₹{rateFor(st, k as StyleKey)}/page)</option>)}
+              {Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v} (₹{k === "basic" ? (offerValid ? st.price_basic_offer : st.price_basic) : rateFor(st, k as StyleKey)}/page)</option>)}
             </select></div>
           <div><Label htmlFor="e-pages">Number of pages</Label><Input id="e-pages" type="number" min={0} className="h-12" value={pages} onChange={(e) => setPages(+e.target.value)} /></div>
           <div><Label htmlFor="e-covers">File covers</Label><Input id="e-covers" type="number" min={0} className="h-12" value={covers} onChange={(e) => setCovers(+e.target.value)} /></div>
@@ -316,12 +316,12 @@ function Estimator() {
             <div className="flex justify-between"><dt>File covers</dt><dd>₹{calc.coverCost}</dd></div>
             {delivery === "both" && <div className="flex justify-between gap-3"><dt>Scan add-on (₹{st.pdf_addon_per_page}/page)</dt><dd>₹{calc.scan}</dd></div>}
             {calc.minimumAdjustment > 0 && <div className="flex justify-between"><dt>Minimum order adjustment</dt><dd>₹{calc.minimumAdjustment}</dd></div>}
-            {delivery !== "pdf" && <div className="flex justify-between"><dt>{calc.shipping === 0 ? "Shipping (free over ₹800)" : "Estimated shipping"}</dt><dd>{calc.shipping === 0 ? "Free" : `₹${calc.shipping}`}</dd></div>}
+            {delivery !== "pdf" && <div className="flex justify-between"><dt>{calc.shipping === 0 ? `Shipping (free over ₹${content.freeShippingThreshold})` : "Estimated shipping"}</dt><dd>{calc.shipping === 0 ? "Free" : `₹${calc.shipping}`}</dd></div>}
           </dl>
           <div className="mt-4 border-t border-ink/20 pt-4">
             <p className="text-sm">Estimated total</p>
             <p className="font-hand text-5xl font-bold">₹{calc.total}</p>
-            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : calc.shipping === 0 ? "Free shipping on orders above ₹{content.freeShippingThreshold}." : "Estimated shipping; final fee confirmed on WhatsApp."}</p>
+            <p className="mt-1 text-sm">{delivery === "pdf" ? "No shipping for PDF." : calc.shipping === 0 ? `Free shipping on orders above ₹${content.freeShippingThreshold}.` : "Estimated shipping; final fee confirmed on WhatsApp."}</p>
             <p className="mt-2 text-xs text-muted-foreground">Projects: starting from ₹{st.price_project_from}, chat for a quote.</p>
           </div>
         </div>
@@ -401,7 +401,7 @@ function OrderForm() {
           <F k="name" label="Name"><Input id="f-name" className="h-12" autoComplete="name" {...register("name")} /></F>
           <F k="phone" label="WhatsApp number"><Input id="f-phone" className="h-12" inputMode="numeric" maxLength={10} placeholder="10 digits" {...register("phone")} /></F>
           <F k="work" label="Subject / Work type">
-            <select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{SERVICES.map((s) => <option key={s.name}>{s.name}</option>)}</select>
+            <select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{content.services.map((s) => <option key={s.name}>{s.name}</option>)}</select>
           </F>
           <F k="style" label="Writing style">
             <select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
