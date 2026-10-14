@@ -59,4 +59,4 @@ export const TESTIMONIALS = [
 ];
 
 export const waLinkTo = (number: string, text?: string) =>
-  `https://wa.me/${number.replace(/\\D/g, "")}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+  `https://wa.me/${number.replace(/\D/g, "")}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
