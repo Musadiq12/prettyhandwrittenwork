@@ -97,6 +97,8 @@ function Index() {
     setMeta('meta[name="description"]', "name", content.seoDescription);
     setMeta('meta[property="og:title"]', "property", content.seoTitle);
     setMeta('meta[property="og:description"]', "property", content.seoDescription);
+    setMeta('meta[name="twitter:title"]', "name", content.seoTitle);
+    setMeta('meta[name="twitter:description"]', "name", content.seoDescription);
     const structured = document.head.querySelector('script[type="application/ld+json"]');
     if (structured) structured.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": [
       { "@type": "LocalBusiness", "@id": "https://prettyhandwrittenwork.lovable.app/#business", name: content.brandName, url: "https://prettyhandwrittenwork.lovable.app/", description: content.seoDescription, areaServed: { "@type": "Country", name: "India" }, sameAs: [content.instagramUrl] },
