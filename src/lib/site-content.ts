@@ -10,6 +10,7 @@ export type SiteContent = {
   ordersDelivered: number;
   aboutStory: string;
   aboutPhotoUrl: string;
+  faviconUrl: string;
   offerEndDate: string;
   minimumOrder: number;
   freeShippingThreshold: number;
@@ -25,6 +26,7 @@ export type SiteContent = {
   testimonials: { name: string; education: string; quote: string }[];
   gallerySamples: { src: string; style: string; pageType: string }[];
   pricingSamples: { label: string; src: string }[];
+  pricingLabels: { basic: string; cursive: string; neat: string; cover: string; project: string };
 };
 
 const image = (id: string) => `https://images.unsplash.com/${id}?w=640&q=75&auto=format`;
@@ -37,6 +39,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   ordersDelivered: ORDERS_DELIVERED,
   aboutStory: ABOUT_STORY,
   aboutPhotoUrl: "",
+  faviconUrl: "/favicon.ico",
   offerEndDate: OFFER_END_DATE ?? "",
   minimumOrder: 120,
   freeShippingThreshold: 800,
@@ -79,6 +82,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   ],
   gallerySamples: [],
   pricingSamples: HANDWRITING_SAMPLE_SLOTS.map((sample) => ({ ...sample })),
+  pricingLabels: { basic: "Basic Running Handwriting", cursive: "Cursive Handwriting", neat: "Beautiful & Neat Handwriting", cover: "File Cover", project: "Projects" },
 };
 
 function mergeContent(raw: unknown): SiteContent {
@@ -94,6 +98,7 @@ function mergeContent(raw: unknown): SiteContent {
     testimonials: Array.isArray(value.testimonials) ? value.testimonials : DEFAULT_SITE_CONTENT.testimonials,
     gallerySamples: Array.isArray(value.gallerySamples) ? value.gallerySamples : DEFAULT_SITE_CONTENT.gallerySamples,
     pricingSamples: Array.isArray(value.pricingSamples) ? value.pricingSamples : DEFAULT_SITE_CONTENT.pricingSamples,
+    pricingLabels: value.pricingLabels && typeof value.pricingLabels === "object" ? { ...DEFAULT_SITE_CONTENT.pricingLabels, ...value.pricingLabels } : DEFAULT_SITE_CONTENT.pricingLabels,
   };
 }
 
