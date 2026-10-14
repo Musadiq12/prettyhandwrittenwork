@@ -93,8 +93,7 @@ const SERVICES = [
 ];
 
 function useWa() {
-  const s = useSiteSettings();
-  return (text?: string) => waLinkTo(s.whatsapp_number, text);
+  return (text?: string) => waLinkTo(WHATSAPP_NUMBER, text);
 }
 
 function Section({ id, title, children, ruled }: { id?: string; title: string; children: React.ReactNode; ruled?: boolean }) {
