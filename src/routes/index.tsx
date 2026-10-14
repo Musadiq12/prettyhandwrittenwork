@@ -112,6 +112,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 function Index() {
   const st = useSiteSettings();
   const limitedOffer = useLimitedOffer();
+  const showLaunchPrice = limitedOffer && Boolean(OFFER_END_DATE && Date.parse(OFFER_END_DATE) > Date.now());
   const SHIPPING_TEXT = `Shipping is charged separately — usually ₹${st.shipping_min}–₹${st.shipping_max} depending on weight and location, confirmed on WhatsApp.`;
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -177,7 +178,7 @@ function Index() {
 
       <Section id="prices" title="Prices" ruled>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PriceCard name="Basic Running Handwriting" unit="/page" price={basicRateOf(st)} was={st.price_basic} limitedOffer={limitedOffer} offerEndDate={OFFER_END_DATE} sample={HANDWRITING_SAMPLE_SLOTS[0]} />
+          <PriceCard name="Basic Running Handwriting" unit="/page" price={showLaunchPrice ? 6 : st.price_basic} was={showLaunchPrice ? 8 : undefined} limitedOffer={showLaunchPrice} offerEndDate={OFFER_END_DATE} sample={HANDWRITING_SAMPLE_SLOTS[0]} />
           <PriceCard name="Cursive Handwriting" unit="/page" price={st.price_cursive} sample={HANDWRITING_SAMPLE_SLOTS[1]} />
           <PriceCard name="Beautiful & Neat Handwriting" unit="/page" price={st.price_neat} sample={HANDWRITING_SAMPLE_SLOTS[2]} />
           <PriceCard name="File Cover" unit="/cover" price={st.price_cover} sample={HANDWRITING_SAMPLE_SLOTS[3]} />
@@ -299,7 +300,7 @@ function Estimator() {
   const [delivery, setDelivery] = useState<DeliveryKey>("physical");
   const calc = useMemo(() => {
     const p = Math.max(0, pages || 0), c = Math.max(0, covers || 0);
-    const writing = p * rateFor(st, style);
+    const writing = p * (style === "basic" && OFFER_END_DATE && Date.parse(OFFER_END_DATE) > Date.now() ? 6 : rateFor(st, style));
     const coverCost = c * st.price_cover;
     const scan = delivery === "both" ? p * st.pdf_addon_per_page : 0;
     const sub = writing + coverCost + scan;
