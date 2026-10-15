@@ -59,9 +59,9 @@ export const TESTIMONIALS = [
 ];
 
 export const waLinkTo = (number: string, text?: string) => {
-  const digits = String(number ?? "").replace(/\\D/g, "");
+  const digits = String(number ?? "").replace(/\D/g, "");
   // Never send visitors to a placeholder, malformed number, or stale hardcoded fallback.
-  if (!/^\\d{10,15}$/.test(digits) || /^9?1?X+$/i.test(String(number ?? "").trim())) {
+  if (!/^\d{10,15}$/.test(digits) || /^9?1?X+$/i.test(String(number ?? "").trim())) {
     return "#whatsapp-unavailable";
   }
   return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
