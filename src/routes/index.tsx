@@ -110,9 +110,13 @@ function Index() {
       <header className="relative z-10 border-b border-border/70 bg-background/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
           <a href="#top" className="flex min-w-0 items-center gap-3" aria-label={content.brandName + " home"}>
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-secondary text-foreground" aria-hidden>
-              <BookOpen className="size-6" />
-            </span>
+            {content.headerLogoUrl.trim() ? (
+              <img src={content.headerLogoUrl} alt="" className="size-11 shrink-0 rounded-xl border border-border object-contain" />
+            ) : (
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-secondary text-foreground" aria-hidden>
+                <BookOpen className="size-6" />
+              </span>
+            )}
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold tracking-tight sm:text-base">{content.brandName}</span>
               <span className="hidden text-xs text-muted-foreground sm:block">Handwritten work, made neat</span>
