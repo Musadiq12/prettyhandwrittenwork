@@ -265,17 +265,24 @@ function DeleteOrder({ order, onDeleted }: { order: Order; onDeleted: () => Prom
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (!open) setTyped(""); }, [open]);
   const del = async () => {
+    if (busy) return;
     setBusy(true);
-    if (order.pdf_paths.length) {
-      const { error } = await supabase.storage.from("order-pdfs").remove(order.pdf_paths);
-      if (error) { setBusy(false); { toast.error("Couldn't delete PDFs: " + error.message); return; } }
+    try {
+      if (order.pdf_paths.length) {
+        const { error } = await supabase.storage.from("order-pdfs").remove(order.pdf_paths);
+        if (error) { toast.error("Couldn't delete PDFs: " + error.message); return; }
+      }
+      const { error } = await supabase.from("orders").delete().eq("id", order.id);
+      if (error) { toast.error("Couldn't delete: " + error.message); return; }
+      toast.success(`Order ${order.order_code} deleted`);
+      setOpen(false);
+      await onDeleted();
+    } catch (error) {
+      console.error("Order deletion failed", error);
+      toast.error("Couldn't delete the order. Check your connection and try again.");
+    } finally {
+      setBusy(false);
     }
-    const { error } = await supabase.from("orders").delete().eq("id", order.id);
-    setBusy(false);
-    if (error) { toast.error("Couldn't delete: " + error.message); return; }
-    toast.success(`Order ${order.order_code} deleted`);
-    setOpen(false);
-    await onDeleted();
   };
   return (
     <>
