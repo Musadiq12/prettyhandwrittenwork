@@ -28,6 +28,40 @@ jobs:
       - name: Audit dependencies
         run: bun audit
 
+  repository-security:
+    name: Repository security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check tracked environment files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$'; then
+            echo "::error::Tracked environment file found. Remove it from Git and rotate any real secrets."
+            exit 1
+          fi
+
+      - name: Scan current tree for common secret patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --exclude='bun.lock' --exclude='*.map'             '(SUPABASE_SERVICE_ROLE_KEY|service_role|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16})' .; then
+            echo "::error::Possible secret pattern found. Review the match without printing values into public logs."
+            exit 1
+          fi
+
+      - name: Check Git history for credential-bearing files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log --all --format= --name-only -- .env '.env.*' | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' | sort -u; then
+            echo "::warning::An environment file exists in Git history. Historical content must be scanned and any real secrets rotated; deleting the file from the latest commit is not enough."
+          fi
+
   quality:
     name: Lint, test, and build
     runs-on: ubuntu-latest
