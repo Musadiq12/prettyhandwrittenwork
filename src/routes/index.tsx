@@ -367,7 +367,7 @@ const schema = z.object({
     if (d.locality.length < 2) ctx.addIssue({ code: "custom", path: ["locality"], message: "Enter your locality or area" });
     if (d.city.length < 2) ctx.addIssue({ code: "custom", path: ["city"], message: "Enter your city" });
     if (d.state.length < 2) ctx.addIssue({ code: "custom", path: ["state"], message: "Enter your state" });
-    if (!/^[1-9]\d{5}$/.test(d.pin ?? "")) ctx.addIssue({ code: "custom", path: ["pin"], message: "Enter all 6 digits of your postal PIN code (no spaces)." });
+    if (!/^[1-9][0-9]{5}$/.test((d.pin ?? "").replace(/\D/g, ""))) ctx.addIssue({ code: "custom", path: ["pin"], message: "Enter a 6-digit Indian PIN code beginning with 1–9. Spaces are okay." });
   }
 });
 type FormValues = z.input<typeof schema>;
