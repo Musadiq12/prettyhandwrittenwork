@@ -101,22 +101,28 @@ export function SiteContentEditor() {
       return;
     }
     setBusy(true);
-    const { data: rows, error: saveError } = await supabase.from("site_content").update({
-      content: form as unknown as import("@/integrations/supabase/types").Json,
-      updated_at: new Date().toISOString(),
-    }).eq("id", 1).select("id");
-    setBusy(false);
-    if (saveError) {
-      toast.error("Website content wasn't saved: " + saveError.message);
-      return;
+    try {
+      const { data: rows, error: saveError } = await supabase.from("site_content").update({
+        content: form as unknown as import("@/integrations/supabase/types").Json,
+        updated_at: new Date().toISOString(),
+      }).eq("id", 1).select("id");
+      if (saveError) {
+        toast.error("Website content wasn't saved: " + saveError.message);
+        return;
+      }
+      if (!rows?.length) {
+        toast.error("No content row was updated. Apply the site-content migration and sign in with an admin account.");
+        return;
+      }
+      qc.setQueryData(["site-content"], form);
+      await qc.invalidateQueries({ queryKey: ["site-content"] });
+      toast.success("Website content saved. The public site will use the updated content.");
+    } catch (error) {
+      toast.error("Website content wasn't saved. Check your connection and try again.");
+      console.error("Website content save failed", error);
+    } finally {
+      setBusy(false);
     }
-    if (!rows?.length) {
-      toast.error("No content row was updated. Apply the site-content migration and sign in with an admin account.");
-      return;
-    }
-    qc.setQueryData(["site-content"], form);
-    await qc.invalidateQueries({ queryKey: ["site-content"] });
-    toast.success("Website content saved. The public site will use the updated content.");
   };
 
   if (isLoading || !form) return <div className="space-y-3"><Skeleton className="h-12" /><Skeleton className="h-48" /><Skeleton className="h-64" /></div>;
