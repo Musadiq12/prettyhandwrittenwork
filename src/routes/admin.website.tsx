@@ -31,6 +31,7 @@ function HeaderLogoEditor() {
   const qc = useQueryClient();
   const [url, setUrl] = useState(content.headerLogoUrl ?? "");
   const [busy, setBusy] = useState(false);
+  const [imageStatus, setImageStatus] = useState<"idle" | "loading" | "valid" | "invalid">("idle");
 
   useEffect(() => setUrl(content.headerLogoUrl ?? ""), [content.headerLogoUrl]);
 
@@ -39,6 +40,10 @@ function HeaderLogoEditor() {
     const value = url.trim();
     if (value && !value.startsWith("/") && !/^https:\/\//i.test(value)) {
       toast.error("Use an https image URL or a site path such as /images/logo.png.");
+      return;
+    }
+    if (value && imageStatus !== "valid") {
+      toast.error("Please wait for the logo preview to load successfully. Use a direct image-file URL, not a sharing page link.");
       return;
     }
     setBusy(true);
