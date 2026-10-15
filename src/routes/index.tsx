@@ -339,6 +339,12 @@ function Estimator() {
   );
 }
 
+const todayLocalDate = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 10);
+};
+
 const schema = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(80),
   phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
@@ -350,7 +356,7 @@ const schema = z.object({
   city: z.string().trim().max(60).default(""),
   state: z.string().trim().max(60).default(""),
   pin: z.string().trim().max(6).optional(),
-  deadline: z.string().min(1, "Pick a deadline"),
+  deadline: z.string().min(1, "Pick a deadline").refine((value) => value >= todayLocalDate(), "Deadline cannot be in the past. Choose today or a future date."),
   notes: z.string().max(1000).optional(),
 }).superRefine((d, ctx) => {
   if (d.delivery !== "pdf" && d.city.length < 2) ctx.addIssue({ code: "custom", path: ["city"], message: "Enter your city" });
@@ -420,7 +426,7 @@ function OrderForm() {
           <F k="delivery" label="Delivery type">
             <select id="f-delivery" className={selectCls} {...register("delivery")}>{Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
           </F>
-          <F k="deadline" label="Deadline"><Input id="f-deadline" type="date" className="h-12" {...register("deadline")} /></F>
+          <F k="deadline" label="Deadline"><Input id="f-deadline" type="date" min={todayLocalDate()} className="h-12" {...register("deadline")} /></F>
           {delivery !== "pdf" && <>
             <F k="city" label="City"><Input id="f-city" className="h-12" required {...register("city")} /></F>
             <F k="state" label="State"><Input id="f-state" className="h-12" required {...register("state")} /></F>
