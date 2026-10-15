@@ -179,13 +179,13 @@
   background: radial-gradient(ellipse at center, oklch(0.975 0.015 85 / 0.92) 0%, oklch(0.975 0.015 85 / 0.75) 40%, oklch(0.975 0.015 85 / 0.2) 80%);
 }
 
-@utility stream-row { overflow: hidden; }
+@utility stream-row { width: 100%; min-width: 100%; overflow: hidden; }
 @utility stream-track {
   display: flex; gap: 1rem; width: max-content;
   animation: stream 50s linear infinite;
 }
 @utility stream-reverse { animation-direction: reverse; animation-duration: 60s; }
-@keyframes stream { from { transform: translateX(0); } to { transform: translateX(-33.333%); } }
+@keyframes stream { from { transform: translateX(0); } to { transform: translateX(-16.6667%); } }
 
 @utility fade-up { animation: fadeUp 0.7s ease-out both; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
