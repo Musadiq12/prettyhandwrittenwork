@@ -18,7 +18,8 @@ export const settingsQuery = queryOptions({
       return DEFAULT_SETTINGS;
     }
   },
-  staleTime: 60_000,
+  staleTime: 0,
+  refetchOnMount: "always",
 });
 
 export function useSiteSettings(): SiteSettings {
