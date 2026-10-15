@@ -393,7 +393,7 @@ function OrderForm() {
     { title: "Delivery address", description: "Where should we deliver your handwritten work?" },
     { title: "Deadline & review", description: "Choose your deadline, check the details, then submit." },
   ];
-  const stepFields = [
+  const stepFields: (keyof FormValues)[][] = [
     ["name", "phone", "work", "style", "pages", "covers", "delivery"],
     delivery === "pdf" ? [] : ["addressLine", "locality", "landmark", "city", "state", "pin"],
     ["deadline", "notes"],
