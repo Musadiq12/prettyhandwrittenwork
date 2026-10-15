@@ -373,7 +373,7 @@ const schema = z.object({
 type FormValues = z.input<typeof schema>;
 
 function Field({ k, label, children, error }: { k: string; label: string; children: React.ReactNode; error?: string | undefined }) {
-  return <div><Label htmlFor={"f-" + k} className="mb-1 block">{label}</Label>{children}{error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}</div>;
+  return <div><Label htmlFor={`f-${k}`} className="mb-1 block">{label}</Label>{children}{error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}</div>;
 }
 
 function OrderForm() {
@@ -393,7 +393,7 @@ function OrderForm() {
     { title: "Delivery address", description: "Where should we deliver your handwritten work?" },
     { title: "Deadline & review", description: "Choose your deadline, check the details, then submit." },
   ];
-  const stepFields: (keyof FormValues)[][] = [
+  const stepFields = [
     ["name", "phone", "work", "style", "pages", "covers", "delivery"],
     delivery === "pdf" ? [] : ["addressLine", "locality", "landmark", "city", "state", "pin"],
     ["deadline", "notes"],
@@ -406,11 +406,11 @@ function OrderForm() {
     const d = schema.parse(raw);
     setSaving(true);
     const addressSummary = d.delivery === "pdf" ? "" : [
-      "House/street: " + d.addressLine,
-      "Locality: " + d.locality,
-      d.landmark.trim() ? "Landmark: " + d.landmark : "",
+      `House/street: ${d.addressLine}`,
+      `Locality: ${d.locality}`,
+      d.landmark.trim() ? `Landmark: ${d.landmark}` : "",
     ].filter(Boolean).join("\\n");
-    const combinedNotes = [addressSummary, d.notes?.trim() ? "Customer instructions: " + d.notes.trim() : ""].filter(Boolean).join("\\n\\n");
+    const combinedNotes = [addressSummary, d.notes?.trim() ? `Customer instructions: ${d.notes.trim()}` : ""].filter(Boolean).join("\\n\\n");
     const { data: code, error } = await supabase.rpc("create_order", {
       _name: d.name, _phone: d.phone, _work_type: d.work, _style: d.style, _pages: d.pages, _covers: d.covers,
       _delivery: d.delivery, _city: d.delivery === "pdf" ? "" : d.city, _state: d.delivery === "pdf" ? "" : d.state, _pin: d.delivery === "pdf" ? "" : (d.pin ?? ""),
@@ -420,24 +420,23 @@ function OrderForm() {
     if (error || !code) {
       toast.error("Couldn't save your order, but you can still send it on WhatsApp.");
     } else {
-      toast.success("Order " + code + " saved! Opening WhatsApp…");
+      toast.success(`Order ${code} saved! Opening WhatsApp…`);
     }
     const lines = [
       "Hi! New order for Pretty Handwritten Work", "",
-      code ? "*Order code:* " + code : null,
-      "*Name:* " + d.name, "*WhatsApp:* " + d.phone, "*Work type:* " + d.work,
-      "*Writing style:* " + STYLES[d.style], "*Approx. pages:* " + d.pages, "*File covers:* " + d.covers,
-      "*Delivery:* " + DELIVERY[d.delivery],
-      "*House/street:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.addressLine),
-      "*Locality/area:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.locality),
-      d.delivery !== "pdf" && d.landmark.trim() ? "*Landmark:* " + d.landmark : null,
-      "*City:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.city),
-      "*State:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.state),
-      "*PIN code:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.pin),
-      "*Deadline:* " + d.deadline, "*Notes:* " + (d.notes || "None"),
-      "*Scan add-on:* " + (d.delivery === "both" ? "₹" + st.pdf_addon_per_page + "/page" : "No"),
-      "*Location:* " + (d.delivery === "pdf" ? "Digital delivery only" : [d.addressLine, d.locality, d.landmark, d.city, d.state, d.pin].filter(Boolean).join(", ")), "",
-      "*Price note:* Minimum order ₹" + content.minimumOrder + ". Shipping is free only above ₹" + content.freeShippingThreshold + "; final shipping is confirmed on WhatsApp.", "",
+      code ? `*Order code:* ${code}` : null,
+      `*Name:* ${d.name}`, `*WhatsApp:* ${d.phone}`, `*Work type:* ${d.work}`,
+      `*Writing style:* ${STYLES[d.style]}`, `*Approx. pages:* ${d.pages}`, `*File covers:* ${d.covers}`,
+      `*Delivery:* ${DELIVERY[d.delivery]}`,
+      `*House/street:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.addressLine}`,
+      `*Locality/area:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.locality}`,
+      d.delivery !== "pdf" && d.landmark.trim() ? `*Landmark:* ${d.landmark}` : null,
+      `*City:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.city}`,
+      `*State:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.state}`,
+      `*PIN code:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.pin}`,
+      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, `*Scan add-on:* ${d.delivery === "both" ? `₹${st.pdf_addon_per_page}/page` : "No"}`,
+      `*Location:* ${d.delivery === "pdf" ? "Digital delivery only" : `${d.addressLine}, ${d.locality}${d.landmark.trim() ? `, near ${d.landmark}` : ""}, ${d.city}, ${d.state} ${d.pin}`}`, "",
+      `*Price note:* Minimum order ₹${content.minimumOrder}. Shipping is free only above ₹${content.freeShippingThreshold}; final shipping is confirmed on WhatsApp.`, "",
       "I will share reference files in this chat.",
     ].filter((l) => l !== null);
     window.location.href = waLink(lines.join("\\n"));
@@ -452,10 +451,10 @@ function OrderForm() {
             <span className="text-muted-foreground">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>
           </div>
           <div className="mb-4 grid grid-cols-3 gap-2" aria-label="Order progress">
-            {steps.map((item, i) => <div key={item.title} className={"h-1.5 rounded-full " + (i <= step ? "bg-primary" : "bg-muted")} />)}
+            {steps.map((item, i) => <div key={item.title} className={`h-1.5 rounded-full ${i <= step ? "bg-primary" : "bg-muted"}`} />)}
           </div>
-          <h3 className="font-hand text-2xl font-bold">{steps[step].title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{steps[step].description}</p>
+          <h3 className="font-hand text-2xl font-bold">{steps[step]?.title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{steps[step]?.description}</p>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4 sm:grid-cols-2">
           {step === 0 && <>
