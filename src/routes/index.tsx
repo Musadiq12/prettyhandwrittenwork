@@ -347,7 +347,7 @@ const todayLocalDate = () => {
 
 const schema = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(80),
-  phone: z.string().trim().regex(/^[6-9]\\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+  phone: z.string().trim().min(1, "Please enter your WhatsApp number").max(30, "WhatsApp number is too long"),
   work: z.string().min(1, "Choose a work type").max(100),
   style: z.enum(["basic", "cursive", "beautiful"]),
   pages: z.coerce.number().int().min(1, "At least 1 page").max(2000),
@@ -404,6 +404,12 @@ function OrderForm() {
   };
   const onSubmit = async (raw: FormValues) => {
     const d = schema.parse(raw);
+    // Accept numbers entered with +91, spaces, or separators; store/use the Indian 10-digit number.
+    const normalizedPhone = d.phone.replace(/\\D/g, "").replace(/^91(?=\\d{10}$)/, "");
+    if (!/^[6-9]\\d{9}$/.test(normalizedPhone)) {
+      toast.error("Enter your 10-digit mobile number, or include +91 before it.");
+      return;
+    }
     setSaving(true);
     const addressSummary = d.delivery === "pdf" ? "" : [
       `House/street: ${d.addressLine}`,
@@ -412,7 +418,7 @@ function OrderForm() {
     ].filter(Boolean).join("\\n");
     const combinedNotes = [addressSummary, d.notes?.trim() ? `Customer instructions: ${d.notes.trim()}` : ""].filter(Boolean).join("\\n\\n");
     const { data: code, error } = await supabase.rpc("create_order", {
-      _name: d.name, _phone: d.phone, _work_type: d.work, _style: d.style, _pages: d.pages, _covers: d.covers,
+      _name: d.name, _phone: normalizedPhone, _work_type: d.work, _style: d.style, _pages: d.pages, _covers: d.covers,
       _delivery: d.delivery, _city: d.delivery === "pdf" ? "" : d.city, _state: d.delivery === "pdf" ? "" : d.state, _pin: d.delivery === "pdf" ? "" : (d.pin ?? ""),
       _deadline: d.deadline, _notes: combinedNotes,
     });
@@ -425,7 +431,7 @@ function OrderForm() {
     const lines = [
       "Hi! New order for Pretty Handwritten Work", "",
       code ? `*Order code:* ${code}` : null,
-      `*Name:* ${d.name}`, `*WhatsApp:* ${d.phone}`, `*Work type:* ${d.work}`,
+      `*Name:* ${d.name}`, `*WhatsApp:* ${normalizedPhone}`, `*Work type:* ${d.work}`,
       `*Writing style:* ${STYLES[d.style]}`, `*Approx. pages:* ${d.pages}`, `*File covers:* ${d.covers}`,
       `*Delivery:* ${DELIVERY[d.delivery]}`,
       `*House/street:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.addressLine}`,
