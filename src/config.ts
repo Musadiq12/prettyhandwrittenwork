@@ -1,6 +1,6 @@
 // Editable public-site defaults. Database-backed settings may override operational rates.
 // Replace the contact placeholders and set a future ISO date to enable the launch offer.
-export const WHATSAPP_NUMBER = "91XXXXXXXXXX"; // Country code + number, digits only.
+export const WHATSAPP_NUMBER = ""; // WhatsApp number is managed in Admin > Settings.
 export const UPI_ID = "yourname@upi";
 export const BRAND_NAME = "Pretty Handwritten Work";
 export const INSTAGRAM_URL = "https://instagram.com/yourusername";
@@ -58,5 +58,11 @@ export const TESTIMONIALS = [
   { name: "Student name", education: "Class / college", quote: "Replace with a genuine customer quote about a project." },
 ];
 
-export const waLinkTo = (number: string, text?: string) =>
-  `https://wa.me/${number.replace(/\D/g, "")}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+export const waLinkTo = (number: string, text?: string) => {
+  const digits = String(number ?? "").replace(/\\D/g, "");
+  // Never send visitors to a placeholder, malformed number, or stale hardcoded fallback.
+  if (!/^\\d{10,15}$/.test(digits) || /^9?1?X+$/i.test(String(number ?? "").trim())) {
+    return "#whatsapp-unavailable";
+  }
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+};
