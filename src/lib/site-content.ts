@@ -118,3 +118,17 @@ export function useSiteContent(): SiteContent {
   const { data } = useQuery({ ...siteContentQuery, placeholderData: DEFAULT_SITE_CONTENT });
   return data ?? DEFAULT_SITE_CONTENT;
 }
+
+/** Share-page links (not the image file itself) that browsers cannot display in an <img>. */
+const SHARE_PAGE_HOSTS = /^(ibb\.co|imgbb\.com|imgur\.com|www\.imgur\.com|drive\.google\.com|photos\.google\.com|photos\.app\.goo\.gl|www\.instagram\.com|instagram\.com|www\.dropbox\.com|dropbox\.com|postimg\.cc)$/i;
+
+/** Empty, a site path like /samples/me.jpg, or an https link pointing straight at an image file. */
+export function isDirectImageUrl(value: string): boolean {
+  const v = value.trim();
+  if (!v) return true;
+  if (v.startsWith("/") && !v.startsWith("//")) return true;
+  try {
+    const url = new URL(v);
+    return url.protocol === "https:" && !SHARE_PAGE_HOSTS.test(url.hostname);
+  } catch { return false; }
+}

@@ -144,7 +144,7 @@ function Index() {
       <Section title="About our handwritten assignments in India" ruled>
         <div className="grid items-center gap-6 md:grid-cols-[220px_1fr]">
           <div className="overflow-hidden rounded-2xl border bg-card">
-            {content.aboutPhotoUrl ? <img src={content.aboutPhotoUrl} alt={content.brandName + " owner"} loading="lazy" width={600} height={750} className="aspect-[4/5] w-full object-cover" /> : <div className="grid aspect-[4/5] place-items-center p-5 text-center text-sm text-muted-foreground"><div><NotebookPen className="mx-auto mb-3 size-8" aria-hidden /><span>Personal photo slot</span><span className="mt-1 block text-xs">Add a photo URL in Admin → Website</span></div></div>}
+            <AboutPhoto src={content.aboutPhotoUrl} alt={content.brandName + " owner"} />}
           </div>
           <div>
             <p className="text-lg leading-8">{content.aboutStory}</p>
