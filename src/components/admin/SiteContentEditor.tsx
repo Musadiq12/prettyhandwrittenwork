@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { siteContentQuery, type SiteContent } from "@/lib/site-content";
+import { isDirectImageUrl, siteContentQuery, type SiteContent } from "@/lib/site-content";
 
 
 function Field({ id, label, value, onChange, multiline = false, type = "text", hint }: {
@@ -58,6 +58,10 @@ export function SiteContentEditor() {
         !Number.isFinite(Number(form.minimumOrder)) || Number(form.minimumOrder) < 0 ||
         !Number.isFinite(Number(form.freeShippingThreshold)) || Number(form.freeShippingThreshold) < 0) {
       toast.error("Stats and order thresholds must be zero or greater.");
+      return;
+    }
+    if (!isDirectImageUrl(form.aboutPhotoUrl)) {
+      toast.error("About photo must be a direct HTTPS image URL or a path to an image in this website. Image-sharing page links will not work.");
       return;
     }
     if (form.instagramUrl && !/^https:\/\//i.test(form.instagramUrl)) {
@@ -136,7 +140,16 @@ export function SiteContentEditor() {
         <Field id="content-brand" label="Brand name" value={form.brandName} onChange={(v) => patch("brandName", v)} />
         <Field id="content-instagram" label="Instagram URL" value={form.instagramUrl} onChange={(v) => patch("instagramUrl", v)} />
         <Field id="content-email" label="Contact email" value={form.contactEmail} onChange={(v) => patch("contactEmail", v)} type="email" />
-        <Field id="content-photo" label="About photo URL" value={form.aboutPhotoUrl} onChange={(v) => patch("aboutPhotoUrl", v)} hint="Paste an image URL. Leave blank to show the existing photo placeholder." />
+        <div className="space-y-2">
+          <Field id="content-photo" label="About photo URL" value={form.aboutPhotoUrl} onChange={(v) => patch("aboutPhotoUrl", v)} hint="Use a direct HTTPS image link (for example, an i.ibb.co image URL) or a path such as /samples/owner.webp. Sharing-page links will not display." />
+          {form.aboutPhotoUrl.trim() && isDirectImageUrl(form.aboutPhotoUrl) ? (
+            <div className="max-w-40 overflow-hidden rounded-xl border bg-secondary">
+              <img src={form.aboutPhotoUrl} alt="About photo preview" loading="lazy" width={160} height={200} className="aspect-[4/5] w-full object-cover" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">{form.aboutPhotoUrl.trim() ? "This does not look like a direct image link. Use the image file address, not the sharing page URL." : "No photo selected; the public site will show a placeholder."}</p>
+          )}
+        </div>
         <Field id="content-favicon" label="Favicon URL or path" value={form.faviconUrl} onChange={(v) => patch("faviconUrl", v)} hint="For example, /favicon.ico or an image URL." />
       </div>
       <Field id="content-story" label="About story" value={form.aboutStory} onChange={(v) => patch("aboutStory", v)} multiline />
