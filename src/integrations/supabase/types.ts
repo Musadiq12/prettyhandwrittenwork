@@ -92,24 +92,6 @@ export type Database = {
         }
         Relationships: []
       }
-      site_content: {
-        Row: {
-          content: Json
-          id: number
-          updated_at: string
-        }
-        Insert: {
-          content?: Json
-          id?: number
-          updated_at?: string
-        }
-        Update: {
-          content?: Json
-          id?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       site_settings: {
         Row: {
           bulk_discount_percent: number
