@@ -393,7 +393,9 @@ function OrderForm() {
   const { register, handleSubmit, watch, trigger, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { style: "basic", delivery: "physical", pages: 10, covers: 0, work: "", city: "", state: "", pin: "", addressLine: "", locality: "", landmark: "" },
-    mode: "onTouched",
+    // Validate when advancing/submitting rather than on every keystroke, keeping typing responsive.
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
   });
   const delivery = watch("delivery");
   const waLink = useWa(st.whatsapp_number);
