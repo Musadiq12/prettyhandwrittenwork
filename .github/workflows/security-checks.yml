@@ -4,27 +4,73 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, 'security/**']
 
 permissions:
   contents: read
 
 jobs:
+  repository-security:
+    name: Repository security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject environment files in the current tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad_files="$(git ls-files --cached --others --exclude-standard | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)"
+          if [[ -n "$bad_files" ]]; then
+            echo "::error::Environment files must not be tracked. Keep only placeholder values in .env.example."
+            printf '%s\n' "$bad_files"
+            exit 1
+          fi
+
+      - name: Scan current tree for common secret patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          patterns='(sb_secret_[A-Za-z0-9_-]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,})'
+          matches="$(grep -RIlE --exclude-dir=.git --exclude='bun.lock' --exclude='*.map' --exclude='SECURITY.md' --exclude='.env.example' "$patterns" . || true)"
+          if [[ -n "$matches" ]]; then
+            echo "::error::Possible credential found in these files. Inspect privately and rotate any exposed secret; values are not printed."
+            printf '%s\n' "$matches"
+            exit 1
+          fi
+
+      - name: Inspect historical environment-file blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          patterns='(sb_secret_[A-Za-z0-9_-]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,})'
+          found=0
+          while IFS= read -r commit; do
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+              if git show "$commit:$path" 2>/dev/null | grep -qE "$patterns"; then
+                echo "::error::Credential-like pattern found in historical file $path at commit $commit. Rotate the credential."
+                found=1
+              fi
+            done < <(git ls-tree -r --name-only "$commit" | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)
+          done < <(git log --all --format=%H -- .env '.env.*' | sort -u)
+          if [[ "$found" -ne 0 ]]; then
+            exit 1
+          fi
+          echo "Historical environment files checked for common private credential patterns."
+
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
-
       - name: Audit dependencies
         run: bun audit
 
@@ -32,27 +78,19 @@ jobs:
     name: Lint, test, and build
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
-
       - name: Lint
         run: bun run lint
-
       - name: Test
         run: bun run test
-
       - name: Production build
         run: bun run build
         env:
-          # Non-secret placeholders let CI compile without exposing production configuration.
           VITE_SUPABASE_PROJECT_ID: ci-placeholder
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
