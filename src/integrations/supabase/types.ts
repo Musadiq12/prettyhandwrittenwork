@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      pdf_lookup_attempts: {
+        Row: {
+          attempted_at: string
+          client_key_hash: string
+          id: number
+        }
+        Insert: {
+          attempted_at?: string
+          client_key_hash: string
+          id?: never
+        }
+        Update: {
+          attempted_at?: string
+          client_key_hash?: string
+          id?: never
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           admin_notes: string | null
