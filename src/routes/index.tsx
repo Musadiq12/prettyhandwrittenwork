@@ -376,6 +376,10 @@ function Field({ k, label, children, error }: { k: string; label: string; childr
   return <div><Label htmlFor={`f-${k}`} className="mb-1 block">{label}</Label>{children}{error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}</div>;
 }
 
+function OrderField({ k, label, children, errors }: { k: keyof FormValues; label: string; children: React.ReactNode; errors: Record<string, { message?: unknown } | undefined> }) {
+  return Field({ k, label, children, error: errors[k]?.message as string | undefined });
+}
+
 function OrderForm() {
   const st = useSiteSettings();
   const content = useSiteContent();
@@ -447,7 +451,6 @@ function OrderForm() {
     ].filter((l) => l !== null);
     window.location.href = waLink(lines.join("\\n"));
   };
-  const F = (p: { k: keyof FormValues; label: string; children: React.ReactNode }) => Field({ ...p, error: errors[p.k]?.message as string | undefined });
   return (
     <Section id="order" title="Place your order" ruled>
       <Card className="mx-auto max-w-2xl">
@@ -464,27 +467,27 @@ function OrderForm() {
         </div>
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4 sm:grid-cols-2">
           {step === 0 && <>
-            <F k="name" label="Full name"><Input id="f-name" className="h-12" autoComplete="name" {...register("name")} /></F>
-            <F k="phone" label="WhatsApp number"><Input id="f-phone" className="h-12" inputMode="numeric" maxLength={10} placeholder="10 digits" autoComplete="tel-national" {...register("phone")} /></F>
-            <F k="work" label="Subject / Work type"><select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{content.services.map((s) => <option key={s.name}>{s.name}</option>)}</select></F>
-            <F k="style" label="Writing style"><select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></F>
-            <F k="pages" label="Approx. pages"><Input id="f-pages" type="number" min={1} className="h-12" {...register("pages")} /></F>
-            <F k="covers" label="File covers"><Input id="f-covers" type="number" min={0} className="h-12" {...register("covers")} /></F>
-            <F k="delivery" label="Delivery type"><select id="f-delivery" className={selectCls} {...register("delivery")}>{Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></F>
+            <OrderField errors={errors} k="name" label="Full name"><Input id="f-name" className="h-12" autoComplete="name" {...register("name")} /></OrderField>
+            <OrderField errors={errors} k="phone" label="WhatsApp number"><Input id="f-phone" className="h-12" inputMode="numeric" maxLength={10} placeholder="10 digits" autoComplete="tel-national" {...register("phone")} /></OrderField>
+            <OrderField errors={errors} k="work" label="Subject / Work type"><select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{content.services.map((s) => <option key={s.name}>{s.name}</option>)}</select></OrderField>
+            <OrderField errors={errors} k="style" label="Writing style"><select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></OrderField>
+            <OrderField errors={errors} k="pages" label="Approx. pages"><Input id="f-pages" type="number" min={1} className="h-12" {...register("pages")} /></OrderField>
+            <OrderField errors={errors} k="covers" label="File covers"><Input id="f-covers" type="number" min={0} className="h-12" {...register("covers")} /></OrderField>
+            <OrderField errors={errors} k="delivery" label="Delivery type"><select id="f-delivery" className={selectCls} {...register("delivery")}>{Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></OrderField>
           </>}
           {step === 1 && <>
             {delivery !== "pdf" ? <>
-              <div className="sm:col-span-2"><F k="addressLine" label="House / building number and street"><Input id="f-addressLine" className="h-12" autoComplete="street-address" placeholder="House no., building, street or road" {...register("addressLine")} /></F></div>
-              <F k="locality" label="Locality / area"><Input id="f-locality" className="h-12" placeholder="Colony, village, neighbourhood" {...register("locality")} /></F>
-              <F k="landmark" label="Landmark (optional)"><Input id="f-landmark" className="h-12" placeholder="Near a school, mosque, shop…" {...register("landmark")} /></F>
-              <F k="city" label="City / town"><Input id="f-city" className="h-12" autoComplete="address-level2" {...register("city")} /></F>
-              <F k="state" label="State"><Input id="f-state" className="h-12" autoComplete="address-level1" {...register("state")} /></F>
-              <F k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" autoComplete="postal-code" maxLength={6} {...register("pin")} /></F>
+              <div className="sm:col-span-2"><OrderField errors={errors} k="addressLine" label="House / building number and street"><Input id="f-addressLine" className="h-12" autoComplete="street-address" placeholder="House no., building, street or road" {...register("addressLine")} /></OrderField></div>
+              <OrderField errors={errors} k="locality" label="Locality / area"><Input id="f-locality" className="h-12" placeholder="Colony, village, neighbourhood" {...register("locality")} /></OrderField>
+              <OrderField errors={errors} k="landmark" label="Landmark (optional)"><Input id="f-landmark" className="h-12" placeholder="Near a school, mosque, shop…" {...register("landmark")} /></OrderField>
+              <OrderField errors={errors} k="city" label="City / town"><Input id="f-city" className="h-12" autoComplete="address-level2" {...register("city")} /></OrderField>
+              <OrderField errors={errors} k="state" label="State"><Input id="f-state" className="h-12" autoComplete="address-level1" {...register("state")} /></OrderField>
+              <OrderField errors={errors} k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" autoComplete="postal-code" maxLength={6} {...register("pin")} /></OrderField>
             </> : <div className="sm:col-span-2 rounded-xl bg-secondary p-4 text-sm">PDF-only orders are delivered digitally, so no postal address is needed.</div>}
           </>}
           {step === 2 && <>
-            <div className="sm:col-span-2"><F k="deadline" label="When do you need it?"><Input id="f-deadline" type="date" min={todayLocalDate()} className="h-12" {...register("deadline")} /></F></div>
-            <div className="sm:col-span-2"><F k="notes" label="Extra instructions (optional)"><Textarea id="f-notes" rows={3} placeholder="Paper type, ink colour, special instructions…" {...register("notes")} /></F></div>
+            <div className="sm:col-span-2"><OrderField errors={errors} k="deadline" label="When do you need it?"><Input id="f-deadline" type="date" min={todayLocalDate()} className="h-12" {...register("deadline")} /></OrderField></div>
+            <div className="sm:col-span-2"><OrderField errors={errors} k="notes" label="Extra instructions (optional)"><Textarea id="f-notes" rows={3} placeholder="Paper type, ink colour, special instructions…" {...register("notes")} /></OrderField></div>
             <div className="sm:col-span-2 rounded-xl border bg-secondary/50 p-4">
               <h4 className="mb-2 font-semibold">Review your order</h4>
               <dl className="space-y-1 text-sm">
