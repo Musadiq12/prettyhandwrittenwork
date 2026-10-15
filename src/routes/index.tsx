@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { BRAND_NAME, INSTAGRAM_URL, FAQ_ITEMS, WHATSAPP_NUMBER, waLinkTo } from "@/config";
-import { useSiteContent } from "@/lib/site-content";
+import { isDirectImageUrl, useSiteContent } from "@/lib/site-content";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useSiteSettings, rateFor, STYLE_LABELS as STYLES, DELIVERY_LABELS as DELIVERY,
@@ -144,7 +144,7 @@ function Index() {
       <Section title="About our handwritten assignments in India" ruled>
         <div className="grid items-center gap-6 md:grid-cols-[220px_1fr]">
           <div className="overflow-hidden rounded-2xl border bg-card">
-            <AboutPhoto src={content.aboutPhotoUrl} alt={content.brandName + " owner"} />}
+            <AboutPhoto src={content.aboutPhotoUrl} alt={content.brandName + " owner"} />
           </div>
           <div>
             <p className="text-lg leading-8">{content.aboutStory}</p>
@@ -465,5 +465,31 @@ function Samples() {
         </DialogContent>
       </Dialog>
     </Section>
+  );
+}
+
+function AboutPhoto({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+
+  if (!src.trim() || failed || !isDirectImageUrl(src)) {
+    return (
+      <div className="grid aspect-[4/5] place-items-center bg-secondary/40 p-5 text-center text-sm text-muted-foreground" aria-label="Owner photo unavailable">
+        <NotebookPen className="size-10" aria-hidden />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      width={600}
+      height={750}
+      onError={() => setFailed(true)}
+      className="aspect-[4/5] w-full bg-secondary object-cover"
+    />
   );
 }
