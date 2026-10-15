@@ -40,13 +40,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bad_files="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example
+          bad_files="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)"
+          if [[ -n "$bad_files" ]]; then
+            echo "::error::Tracked environment file found. Remove it from Git and rotate any real secrets."
+            printf '%s\n' "$bad_files"
+            exit 1
+          fi
 
       - name: Scan current tree for common secret patterns
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='bun.lock' --exclude='*.map'             '(SUPABASE_SERVICE_ROLE_KEY|service_role|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16})' .; then
+          if grep -RInE --exclude-dir=.git --exclude='bun.lock' --exclude='*.map' '(SUPABASE_SERVICE_ROLE_KEY|service_role|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16})' .; then
             echo "::error::Possible secret pattern found. Review the match without printing values into public logs."
             exit 1
           fi
@@ -55,8 +60,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          historical_env_files="$(git log --all --format= --name-only -- .env '.env.*' | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example
-
+          historical_env_files="$(git log --all --format= --name-only -- .env '.env.*' | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' | sort -u || true)"
+          if [[ -n "$historical_env_files" ]]; then
+            echo "::warning::An environment file exists in Git history. Historical content must be scanned and any real secrets rotated; deleting the file from the latest commit is not enough."
+            printf '%s\n' "$historical_env_files"
+          fi
   quality:
     name: Lint, test, and build
     runs-on: ubuntu-latest
