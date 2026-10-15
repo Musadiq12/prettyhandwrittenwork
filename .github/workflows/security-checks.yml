@@ -65,6 +65,7 @@ jobs:
             echo "::warning::An environment file exists in Git history. Historical content must be scanned and any real secrets rotated; deleting the file from the latest commit is not enough."
             printf '%s\n' "$historical_env_files"
           fi
+
   quality:
     name: Lint, test, and build
     runs-on: ubuntu-latest
