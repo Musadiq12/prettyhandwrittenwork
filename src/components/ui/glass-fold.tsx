@@ -175,7 +175,8 @@ export function GlassFold({
       gl.enableVertexAttribArray(position);
       gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
 
-      const uniform = (name: string) => gl.getUniformLocation(program, name);
+      const linked = program;
+      const uniform = (name: string) => gl.getUniformLocation(linked, name);
       const u = {
         time: uniform("u_time"),
         color1: uniform("u_color1"),

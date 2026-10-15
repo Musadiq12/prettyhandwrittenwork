@@ -256,7 +256,7 @@ function Index() {
 }
 
 function PriceCard({ name, price, unit = "", was, prefix = "", limitedOffer = false, offerEndDate, sample }: {
-  name: string; price: number; unit?: string; was?: number; prefix?: string; limitedOffer?: boolean;
+  name: string; price: number; unit?: string; was?: number | undefined; prefix?: string; limitedOffer?: boolean;
   offerEndDate?: string | null; sample: { label: string; src: string };
 }) {
   const sampleExists = imageAvailable(sample.src);

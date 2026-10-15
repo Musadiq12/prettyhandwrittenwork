@@ -15,6 +15,13 @@
       "when": 1791975263427,
       "tag": "0001_conditional_order_address",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792044941160,
+      "tag": "0002_site_content_settings",
+      "breakpoints": true
     }
   ]
 }
