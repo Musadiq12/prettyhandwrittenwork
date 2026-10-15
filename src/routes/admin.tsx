@@ -131,19 +131,33 @@ function Login({ denied, onRetry }: { denied: boolean; onRetry: () => void }) {
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
-    onRetry();
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    setBusy(false);
-    if (error) toast.error("Wrong email or password.");
+    try {
+      onRetry();
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) toast.error("Wrong email or password.");
+    } catch (error) {
+      toast.error("Couldn't sign in. Check your connection and try again.");
+      console.error("Admin sign-in failed", error);
+    } finally {
+      setBusy(false);
+    }
   };
   const sendReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` });
-    setBusy(false);
-    if (error) toast.error(error.message);
-    else { toast.success("If that email is registered, a reset link is on its way."); setForgot(false); }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` });
+      if (error) toast.error(error.message);
+      else { toast.success("If that email is registered, a reset link is on its way."); setForgot(false); }
+    } catch (error) {
+      toast.error("Couldn't send the reset email. Check your connection and try again.");
+      console.error("Password reset request failed", error);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
