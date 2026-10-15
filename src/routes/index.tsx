@@ -367,7 +367,7 @@ const schema = z.object({
     if (d.locality.length < 2) ctx.addIssue({ code: "custom", path: ["locality"], message: "Enter your locality or area" });
     if (d.city.length < 2) ctx.addIssue({ code: "custom", path: ["city"], message: "Enter your city" });
     if (d.state.length < 2) ctx.addIssue({ code: "custom", path: ["state"], message: "Enter your state" });
-    if (!/^[1-9]\\d{5}$/.test(d.pin ?? "")) ctx.addIssue({ code: "custom", path: ["pin"], message: "Enter a valid 6-digit PIN code" });
+    if (!/^\\d{6}$/.test(d.pin ?? "")) ctx.addIssue({ code: "custom", path: ["pin"], message: "Enter all 6 digits of your postal PIN code (no spaces)." });
   }
 });
 type FormValues = z.input<typeof schema>;
@@ -491,7 +491,7 @@ function OrderForm() {
               <OrderField errors={errors} k="landmark" label="Landmark (optional)"><Input id="f-landmark" className="h-12" placeholder="Near a school, mosque, shop…" {...register("landmark")} /></OrderField>
               <OrderField errors={errors} k="city" label="City / town"><Input id="f-city" className="h-12" autoComplete="address-level2" {...register("city")} /></OrderField>
               <OrderField errors={errors} k="state" label="State"><Input id="f-state" className="h-12" autoComplete="address-level1" {...register("state")} /></OrderField>
-              <OrderField errors={errors} k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" autoComplete="postal-code" maxLength={6} {...register("pin")} /></OrderField>
+              <OrderField errors={errors} k="pin" label="PIN code"><Input id="f-pin" className="h-12" type="text" inputMode="numeric" autoComplete="postal-code" maxLength={6} placeholder="6-digit PIN code" {...register("pin", { setValueAs: (value: string) => value.replace(/\\D/g, "").slice(0, 6) })} /></OrderField>
             </> : <div className="sm:col-span-2 rounded-xl bg-secondary p-4 text-sm">PDF-only orders are delivered digitally, so no postal address is needed.</div>}
           </>}
           {step === 2 && <>
