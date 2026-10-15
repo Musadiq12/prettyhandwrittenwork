@@ -64,16 +64,23 @@ function SettingsPage() {
     if (r.data.shipping_min > r.data.shipping_max) { setErrors({ shipping_max: "Must be ≥ minimum" }); toast.error("Shipping max must be at least the minimum."); return false; }
     setErrors({});
     setBusy(true);
-    const { data: rows, error } = await supabase.from("site_settings").update(r.data).eq("id", 1).select();
-    setBusy(false);
-    if (error) { toast.error("Couldn't save: " + error.message); return false; }
-    if (!rows?.length) { toast.error("Couldn't save: your account doesn't have permission. Please log out and in again."); return false; }
-    const saved = rows[0]!;
-    setForm(Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, typeof v === "boolean" ? v : String(v)])));
-    qc.setQueryData(["site-settings"], saved);
-    toast.success("Settings saved");
-    await qc.invalidateQueries({ queryKey: ["site-settings"] });
-    return true;
+    try {
+      const { data: rows, error } = await supabase.from("site_settings").update(r.data).eq("id", 1).select();
+      if (error) { toast.error("Couldn't save: " + error.message); return false; }
+      if (!rows?.length) { toast.error("Couldn't save: your account doesn't have permission. Please log out and in again."); return false; }
+      const saved = rows[0]!;
+      setForm(Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, typeof v === "boolean" ? v : String(v)])));
+      qc.setQueryData(["site-settings"], saved);
+      toast.success("Settings saved");
+      await qc.invalidateQueries({ queryKey: ["site-settings"] });
+      return true;
+    } catch (error) {
+      toast.error("Couldn't save settings. Check your connection and try again.");
+      console.error("Settings save failed", error);
+      return false;
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (isLoading || !form) return <div className="space-y-3"><Skeleton className="h-10 w-40" /><Skeleton className="h-24" /><Skeleton className="h-64" /></div>;
@@ -88,11 +95,26 @@ function SettingsPage() {
         </div>
         <Switch aria-label="Limited-time offer" className="scale-150" checked={form["offer_active"] as boolean}
           onCheckedChange={async (v) => {
-            setForm({ ...form, offer_active: v });
-            const { data: rows, error } = await supabase.from("site_settings").update({ offer_active: v }).eq("id", 1).select("offer_active");
-            if (error || !rows?.length) { setForm((p) => p && { ...p, offer_active: !v }); toast.error("Couldn't change the offer. " + (error?.message ?? "Please log in again.")); return; }
-            toast.success(v ? "Offer turned ON" : "Offer turned OFF");
-            await qc.invalidateQueries({ queryKey: ["site-settings"] });
+            if (busy) return;
+            const previous = Boolean(form["offer_active"]);
+            setBusy(true);
+            setForm((current) => current && { ...current, offer_active: v });
+            try {
+              const { data: rows, error } = await supabase.from("site_settings").update({ offer_active: v }).eq("id", 1).select("offer_active");
+              if (error || !rows?.length) {
+                setForm((current) => current && { ...current, offer_active: previous });
+                toast.error("Couldn't change the offer. " + (error?.message ?? "Please log in again."));
+                return;
+              }
+              toast.success(v ? "Offer turned ON" : "Offer turned OFF");
+              await qc.invalidateQueries({ queryKey: ["site-settings"] });
+            } catch (error) {
+              setForm((current) => current && { ...current, offer_active: previous });
+              toast.error("Couldn't change the offer. Check your connection and try again.");
+              console.error("Offer toggle failed", error);
+            } finally {
+              setBusy(false);
+            }
           }} />
       </div>
 
