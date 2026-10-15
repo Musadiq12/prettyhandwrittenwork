@@ -458,7 +458,7 @@ function OrderForm() {
       `*Price note:* Minimum order ₹${content.minimumOrder}. Shipping is free only above ₹${content.freeShippingThreshold}; final shipping is confirmed on WhatsApp.`, "",
       "I will share reference files in this chat.",
     ].filter((l) => l !== null);
-    window.location.href = waLink(lines.join("\\n"));
+    window.location.href = waLink(lines.join("\n"));
   };
   return (
     <Section id="order" title="Place your order" ruled>
