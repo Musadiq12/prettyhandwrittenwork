@@ -42,10 +42,6 @@ function HeaderLogoEditor() {
       toast.error("Use an https image URL or a site path such as /images/logo.png.");
       return;
     }
-    if (value && imageStatus !== "valid") {
-      toast.error("Please wait for the logo preview to load successfully. Use a direct image-file URL, not a sharing page link.");
-      return;
-    }
     setBusy(true);
     try {
       const { data: row, error: readError } = await supabase
