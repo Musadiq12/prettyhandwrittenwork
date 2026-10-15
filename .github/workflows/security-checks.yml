@@ -33,20 +33,33 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='bun.lock' --exclude='*.map' '(SUPABASE_SERVICE_ROLE_KEY|service_role|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16})' .; then
-            echo "::error::Possible secret pattern found. Review matches without copying values into public logs."
+          patterns='(sb_secret_[A-Za-z0-9_-]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,})'
+          matches="$(grep -RIlE --exclude-dir=.git --exclude='bun.lock' --exclude='*.map' --exclude='SECURITY.md' --exclude='.env.example' "$patterns" . || true)"
+          if [[ -n "$matches" ]]; then
+            echo "::error::Possible credential found in these files. Inspect privately and rotate any exposed secret; values are not printed."
+            printf '%s\n' "$matches"
             exit 1
           fi
 
-      - name: Warn about environment files in Git history
+      - name: Inspect historical environment-file blobs
         shell: bash
         run: |
           set -euo pipefail
-          historical_env_files="$(git log --all --format= --name-only -- .env '.env.*' | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' | sort -u || true)"
-          if [[ -n "$historical_env_files" ]]; then
-            echo "::warning::An environment file exists in Git history. Scan historical blobs and rotate any real secrets."
-            printf '%s\n' "$historical_env_files"
+          patterns='(sb_secret_[A-Za-z0-9_-]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,})'
+          found=0
+          while IFS= read -r commit; do
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+              if git show "$commit:$path" 2>/dev/null | grep -qE "$patterns"; then
+                echo "::error::Credential-like pattern found in historical file $path at commit $commit. Rotate the credential."
+                found=1
+              fi
+            done < <(git ls-tree -r --name-only "$commit" | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)
+          done < <(git log --all --format=%H -- .env '.env.*' | sort -u)
+          if [[ "$found" -ne 0 ]]; then
+            exit 1
           fi
+          echo "Historical environment files checked for common private credential patterns."
 
   dependency-audit:
     name: Dependency audit
