@@ -418,8 +418,8 @@ function OrderForm() {
   const onSubmit = async (raw: FormValues) => {
     const d = schema.parse(raw);
     // Accept numbers entered with +91, spaces, or separators; store/use the Indian 10-digit number.
-    const normalizedPhone = d.phone.replace(/\\D/g, "").replace(/^91(?=\\d{10}$)/, "");
-    if (!/^[6-9]\\d{9}$/.test(normalizedPhone)) {
+    const normalizedPhone = d.phone.replace(/\D/g, "").replace(/^91(?=\d{10}$)/, "");
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
       toast.error("Enter your 10-digit mobile number, or include +91 before it.");
       return;
     }
