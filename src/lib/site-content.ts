@@ -11,6 +11,7 @@ export type SiteContent = {
   aboutStory: string;
   aboutPhotoUrl: string;
   faviconUrl: string;
+  headerLogoUrl: string;
   offerEndDate: string;
   minimumOrder: number;
   freeShippingThreshold: number;
@@ -40,6 +41,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   aboutStory: ABOUT_STORY,
   aboutPhotoUrl: "",
   faviconUrl: "/favicon.svg",
+  headerLogoUrl: "",
   offerEndDate: OFFER_END_DATE ?? "",
   minimumOrder: 120,
   freeShippingThreshold: 800,
