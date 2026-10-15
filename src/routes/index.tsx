@@ -377,7 +377,14 @@ function Field({ k, label, children, error }: { k: string; label: string; childr
 }
 
 function OrderField({ k, label, children, errors }: { k: keyof FormValues; label: string; children: React.ReactNode; errors: Record<string, { message?: unknown } | undefined> }) {
-  return Field({ k, label, children, error: errors[k]?.message as string | undefined });
+  const error = errors[k]?.message as string | undefined;
+  return (
+    <div>
+      <Label htmlFor={`f-${k}`} className="mb-1 block">{label}</Label>
+      {children}
+      {error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}
+    </div>
+  );
 }
 
 function OrderForm() {
