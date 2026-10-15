@@ -39,11 +39,17 @@ function SheetBody({ order, onClose }: { order: Order; onClose: () => void }) {
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-orders"] });
 
   const update = async (patch: Partial<Order>, okMsg: string) => {
-    const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
-    if (error) { toast.error("Couldn't save: " + error.message); return false; }
-    toast.success(okMsg);
-    await refresh();
-    return true;
+    try {
+      const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
+      if (error) { toast.error("Couldn't save: " + error.message); return false; }
+      toast.success(okMsg);
+      await refresh();
+      return true;
+    } catch (error) {
+      console.error("Order update failed", error);
+      toast.error("Couldn't save the order. Check your connection and try again.");
+      return false;
+    }
   };
 
   // Editable fields
@@ -206,11 +212,17 @@ function PdfSection({ order, refresh, onUploaded }: { order: Order; refresh: () 
   const remove = async (i: number) => {
     const p = paths[i]!;
     const next = paths.filter((_, j) => j !== i);
-    const { error } = await supabase.from("orders").update({ pdf_paths: next }).eq("id", order.id);
-    if (error) { toast.error("Couldn't remove: " + error.message); return; }
-    await supabase.storage.from("order-pdfs").remove([p]);
-    toast.success("PDF removed");
-    await refresh();
+    try {
+      const { error } = await supabase.from("orders").update({ pdf_paths: next }).eq("id", order.id);
+      if (error) { toast.error("Couldn't remove: " + error.message); return; }
+      const { error: storageError } = await supabase.storage.from("order-pdfs").remove([p]);
+      if (storageError) toast.error("PDF was detached from the order, but its stored file could not be removed.");
+      else toast.success("PDF removed");
+      await refresh();
+    } catch (error) {
+      console.error("PDF removal failed", error);
+      toast.error("Couldn't remove the PDF. Check your connection and try again.");
+    }
   };
 
   return (
