@@ -347,98 +347,160 @@ const todayLocalDate = () => {
 
 const schema = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(80),
-  phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+  phone: z.string().trim().regex(/^[6-9]\\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
   work: z.string().min(1, "Choose a work type").max(100),
   style: z.enum(["basic", "cursive", "beautiful"]),
   pages: z.coerce.number().int().min(1, "At least 1 page").max(2000),
   covers: z.coerce.number().int().min(0).max(100),
   delivery: z.enum(["physical", "pdf", "both"]),
+  addressLine: z.string().trim().max(120).default(""),
+  locality: z.string().trim().max(120).default(""),
+  landmark: z.string().trim().max(120).default(""),
   city: z.string().trim().max(60).default(""),
   state: z.string().trim().max(60).default(""),
   pin: z.string().trim().max(6).optional(),
   deadline: z.string().min(1, "Pick a deadline").refine((value) => value >= todayLocalDate(), "Deadline cannot be in the past. Choose today or a future date."),
   notes: z.string().max(1000).optional(),
 }).superRefine((d, ctx) => {
-  if (d.delivery !== "pdf" && d.city.length < 2) ctx.addIssue({ code: "custom", path: ["city"], message: "Enter your city" });
-  if (d.delivery !== "pdf" && d.state.length < 2) ctx.addIssue({ code: "custom", path: ["state"], message: "Enter your state" });
-  if (d.delivery !== "pdf" && !/^[1-9]\d{5}$/.test(d.pin ?? "")) ctx.addIssue({ code: "custom", path: ["pin"], message: "Enter a valid 6-digit PIN code" });
+  if (d.delivery !== "pdf") {
+    if (d.addressLine.length < 3) ctx.addIssue({ code: "custom", path: ["addressLine"], message: "Enter your house/building and street address" });
+    if (d.locality.length < 2) ctx.addIssue({ code: "custom", path: ["locality"], message: "Enter your locality or area" });
+    if (d.city.length < 2) ctx.addIssue({ code: "custom", path: ["city"], message: "Enter your city" });
+    if (d.state.length < 2) ctx.addIssue({ code: "custom", path: ["state"], message: "Enter your state" });
+    if (!/^[1-9]\\d{5}$/.test(d.pin ?? "")) ctx.addIssue({ code: "custom", path: ["pin"], message: "Enter a valid 6-digit PIN code" });
+  }
 });
 type FormValues = z.input<typeof schema>;
 
 function Field({ k, label, children, error }: { k: string; label: string; children: React.ReactNode; error?: string | undefined }) {
-  return <div><Label htmlFor={`f-${k}`} className="mb-1 block">{label}</Label>{children}{error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}</div>;
+  return <div><Label htmlFor={"f-" + k} className="mb-1 block">{label}</Label>{children}{error && <p role="alert" className="mt-1 text-sm text-destructive">{error}</p>}</div>;
 }
 
 function OrderForm() {
   const st = useSiteSettings();
   const content = useSiteContent();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, trigger, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { style: "basic", delivery: "physical", pages: 10, covers: 0, work: "", city: "", state: "", pin: "" },
+    defaultValues: { style: "basic", delivery: "physical", pages: 10, covers: 0, work: "", city: "", state: "", pin: "", addressLine: "", locality: "", landmark: "" },
+    mode: "onTouched",
   });
   const delivery = watch("delivery");
   const waLink = useWa(st.whatsapp_number);
+  const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const steps = [
+    { title: "Your details", description: "Tell us who the order is for and what you need." },
+    { title: "Delivery address", description: "Where should we deliver your handwritten work?" },
+    { title: "Deadline & review", description: "Choose your deadline, check the details, then submit." },
+  ];
+  const stepFields: (keyof FormValues)[][] = [
+    ["name", "phone", "work", "style", "pages", "covers", "delivery"],
+    delivery === "pdf" ? [] : ["addressLine", "locality", "landmark", "city", "state", "pin"],
+    ["deadline", "notes"],
+  ];
+  const nextStep = async () => {
+    const valid = await trigger(stepFields[step], { shouldFocus: true });
+    if (valid) setStep((current) => Math.min(current + 1, steps.length - 1));
+  };
   const onSubmit = async (raw: FormValues) => {
     const d = schema.parse(raw);
     setSaving(true);
+    const addressSummary = d.delivery === "pdf" ? "" : [
+      "House/street: " + d.addressLine,
+      "Locality: " + d.locality,
+      d.landmark.trim() ? "Landmark: " + d.landmark : "",
+    ].filter(Boolean).join("\\n");
+    const combinedNotes = [addressSummary, d.notes?.trim() ? "Customer instructions: " + d.notes.trim() : ""].filter(Boolean).join("\\n\\n");
     const { data: code, error } = await supabase.rpc("create_order", {
       _name: d.name, _phone: d.phone, _work_type: d.work, _style: d.style, _pages: d.pages, _covers: d.covers,
       _delivery: d.delivery, _city: d.delivery === "pdf" ? "" : d.city, _state: d.delivery === "pdf" ? "" : d.state, _pin: d.delivery === "pdf" ? "" : (d.pin ?? ""),
-      _deadline: d.deadline, _notes: d.notes ?? "",
+      _deadline: d.deadline, _notes: combinedNotes,
     });
     setSaving(false);
     if (error || !code) {
       toast.error("Couldn't save your order, but you can still send it on WhatsApp.");
     } else {
-      toast.success(`Order ${code} saved! Opening WhatsApp…`);
+      toast.success("Order " + code + " saved! Opening WhatsApp…");
     }
     const lines = [
       "Hi! New order for Pretty Handwritten Work", "",
-      code ? `*Order code:* ${code}` : null,
-      `*Name:* ${d.name}`, `*WhatsApp:* ${d.phone}`, `*Work type:* ${d.work}`,
-      `*Writing style:* ${STYLES[d.style]}`, `*Approx. pages:* ${d.pages}`, `*File covers:* ${d.covers}`,
-      `*Delivery:* ${DELIVERY[d.delivery]}`,
-      `*City:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.city}`,
-      `*State:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.state}`,
-      `*PIN code:* ${d.delivery === "pdf" ? "Not required (PDF only)" : d.pin}`,
-      `*Deadline:* ${d.deadline}`, `*Notes:* ${d.notes || "None"}`, `*Scan add-on:* ${d.delivery === "both" ? `₹${st.pdf_addon_per_page}/page` : "No"}`, `*Location:* ${d.delivery === "pdf" ? "Digital delivery only" : `${d.city}, ${d.state} ${d.pin}`}`, "",
-      `*Price note:* Minimum order ₹${content.minimumOrder}. Shipping is free only above ₹${content.freeShippingThreshold}; final shipping is confirmed on WhatsApp.`, "",
+      code ? "*Order code:* " + code : null,
+      "*Name:* " + d.name, "*WhatsApp:* " + d.phone, "*Work type:* " + d.work,
+      "*Writing style:* " + STYLES[d.style], "*Approx. pages:* " + d.pages, "*File covers:* " + d.covers,
+      "*Delivery:* " + DELIVERY[d.delivery],
+      "*House/street:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.addressLine),
+      "*Locality/area:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.locality),
+      d.delivery !== "pdf" && d.landmark.trim() ? "*Landmark:* " + d.landmark : null,
+      "*City:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.city),
+      "*State:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.state),
+      "*PIN code:* " + (d.delivery === "pdf" ? "Not required (PDF only)" : d.pin),
+      "*Deadline:* " + d.deadline, "*Notes:* " + (d.notes || "None"),
+      "*Scan add-on:* " + (d.delivery === "both" ? "₹" + st.pdf_addon_per_page + "/page" : "No"),
+      "*Location:* " + (d.delivery === "pdf" ? "Digital delivery only" : [d.addressLine, d.locality, d.landmark, d.city, d.state, d.pin].filter(Boolean).join(", ")), "",
+      "*Price note:* Minimum order ₹" + content.minimumOrder + ". Shipping is free only above ₹" + content.freeShippingThreshold + "; final shipping is confirmed on WhatsApp.", "",
       "I will share reference files in this chat.",
     ].filter((l) => l !== null);
-    window.location.href = waLink(lines.join("\n"));
+    window.location.href = waLink(lines.join("\\n"));
   };
   const F = (p: { k: keyof FormValues; label: string; children: React.ReactNode }) => Field({ ...p, error: errors[p.k]?.message as string | undefined });
   return (
     <Section id="order" title="Place your order" ruled>
       <Card className="mx-auto max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4 sm:grid-cols-2">
-          <F k="name" label="Name"><Input id="f-name" className="h-12" autoComplete="name" {...register("name")} /></F>
-          <F k="phone" label="WhatsApp number"><Input id="f-phone" className="h-12" inputMode="numeric" maxLength={10} placeholder="10 digits" {...register("phone")} /></F>
-          <F k="work" label="Subject / Work type">
-            <select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{content.services.map((s) => <option key={s.name}>{s.name}</option>)}</select>
-          </F>
-          <F k="style" label="Writing style">
-            <select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-          </F>
-          <F k="pages" label="Approx. pages"><Input id="f-pages" type="number" min={1} className="h-12" {...register("pages")} /></F>
-          <F k="covers" label="File covers"><Input id="f-covers" type="number" min={0} className="h-12" {...register("covers")} /></F>
-          <F k="delivery" label="Delivery type">
-            <select id="f-delivery" className={selectCls} {...register("delivery")}>{Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-          </F>
-          <F k="deadline" label="Deadline"><Input id="f-deadline" type="date" min={todayLocalDate()} className="h-12" {...register("deadline")} /></F>
-          {delivery !== "pdf" && <>
-            <F k="city" label="City"><Input id="f-city" className="h-12" required {...register("city")} /></F>
-            <F k="state" label="State"><Input id="f-state" className="h-12" required {...register("state")} /></F>
-            <F k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" required maxLength={6} {...register("pin")} /></F>
-          </>}
-          <div className="sm:col-span-2"><F k="notes" label="Notes / special instructions"><Textarea id="f-notes" rows={4} {...register("notes")} /></F></div>
-          <div className="sm:col-span-2">
-            <Button type="submit" disabled={saving} className="min-h-12 w-full rounded-full px-6 font-semibold shadow-sm">
-              <MessageCircle className="size-5" aria-hidden /> {saving ? "Saving order…" : "Submit order & continue to WhatsApp"}
-            </Button>
-            <p className="mt-3 text-center text-sm text-muted-foreground">Your order details will be saved first, then WhatsApp will open with a pre-filled message. You can attach reference files there.</p>
+        <div className="mb-6">
+          <div className="mb-3 flex items-center justify-between text-sm">
+            <span className="font-medium">Step {step + 1} of {steps.length}</span>
+            <span className="text-muted-foreground">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>
           </div>
+          <div className="mb-4 grid grid-cols-3 gap-2" aria-label="Order progress">
+            {steps.map((item, i) => <div key={item.title} className={"h-1.5 rounded-full " + (i <= step ? "bg-primary" : "bg-muted")} />)}
+          </div>
+          <h3 className="font-hand text-2xl font-bold">{steps[step].title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{steps[step].description}</p>
+        </div>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4 sm:grid-cols-2">
+          {step === 0 && <>
+            <F k="name" label="Full name"><Input id="f-name" className="h-12" autoComplete="name" {...register("name")} /></F>
+            <F k="phone" label="WhatsApp number"><Input id="f-phone" className="h-12" inputMode="numeric" maxLength={10} placeholder="10 digits" autoComplete="tel-national" {...register("phone")} /></F>
+            <F k="work" label="Subject / Work type"><select id="f-work" className={selectCls} {...register("work")}><option value="">Select…</option>{content.services.map((s) => <option key={s.name}>{s.name}</option>)}</select></F>
+            <F k="style" label="Writing style"><select id="f-style" className={selectCls} {...register("style")}>{Object.entries(STYLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></F>
+            <F k="pages" label="Approx. pages"><Input id="f-pages" type="number" min={1} className="h-12" {...register("pages")} /></F>
+            <F k="covers" label="File covers"><Input id="f-covers" type="number" min={0} className="h-12" {...register("covers")} /></F>
+            <F k="delivery" label="Delivery type"><select id="f-delivery" className={selectCls} {...register("delivery")}>{Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></F>
+          </>}
+          {step === 1 && <>
+            {delivery !== "pdf" ? <>
+              <div className="sm:col-span-2"><F k="addressLine" label="House / building number and street"><Input id="f-addressLine" className="h-12" autoComplete="street-address" placeholder="House no., building, street or road" {...register("addressLine")} /></F></div>
+              <F k="locality" label="Locality / area"><Input id="f-locality" className="h-12" placeholder="Colony, village, neighbourhood" {...register("locality")} /></F>
+              <F k="landmark" label="Landmark (optional)"><Input id="f-landmark" className="h-12" placeholder="Near a school, mosque, shop…" {...register("landmark")} /></F>
+              <F k="city" label="City / town"><Input id="f-city" className="h-12" autoComplete="address-level2" {...register("city")} /></F>
+              <F k="state" label="State"><Input id="f-state" className="h-12" autoComplete="address-level1" {...register("state")} /></F>
+              <F k="pin" label="PIN code"><Input id="f-pin" className="h-12" inputMode="numeric" autoComplete="postal-code" maxLength={6} {...register("pin")} /></F>
+            </> : <div className="sm:col-span-2 rounded-xl bg-secondary p-4 text-sm">PDF-only orders are delivered digitally, so no postal address is needed.</div>}
+          </>}
+          {step === 2 && <>
+            <div className="sm:col-span-2"><F k="deadline" label="When do you need it?"><Input id="f-deadline" type="date" min={todayLocalDate()} className="h-12" {...register("deadline")} /></F></div>
+            <div className="sm:col-span-2"><F k="notes" label="Extra instructions (optional)"><Textarea id="f-notes" rows={3} placeholder="Paper type, ink colour, special instructions…" {...register("notes")} /></F></div>
+            <div className="sm:col-span-2 rounded-xl border bg-secondary/50 p-4">
+              <h4 className="mb-2 font-semibold">Review your order</h4>
+              <dl className="space-y-1 text-sm">
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Name</dt><dd className="text-right">{watch("name")}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">WhatsApp</dt><dd className="text-right">{watch("phone")}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Work</dt><dd className="text-right">{watch("work")}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Pages</dt><dd className="text-right">{watch("pages")}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Delivery</dt><dd className="text-right">{DELIVERY[delivery]}</dd></div>
+                {delivery !== "pdf" && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Address</dt><dd className="max-w-[65%] text-right">{[watch("addressLine"), watch("locality"), watch("landmark"), watch("city"), watch("state"), watch("pin")].filter(Boolean).join(", ")}</dd></div>}
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Deadline</dt><dd className="text-right">{watch("deadline")}</dd></div>
+              </dl>
+            </div>
+          </>}
+          <div className="sm:col-span-2 flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-between">
+            {step > 0 ? <Button type="button" variant="outline" className="min-h-12" onClick={() => setStep((current) => current - 1)} disabled={saving}>Back</Button> : <span />}
+            {step < steps.length - 1 ? <Button type="button" className="min-h-12 sm:ml-auto" onClick={() => void nextStep()}>Next <span aria-hidden>→</span></Button> :
+              <Button type="submit" disabled={saving} className="min-h-12 w-full rounded-full px-6 font-semibold shadow-sm sm:w-auto">
+                <MessageCircle className="size-5" aria-hidden /> {saving ? "Saving order…" : "Submit order & continue to WhatsApp"}
+              </Button>}
+          </div>
+          <p className="sm:col-span-2 text-center text-xs text-muted-foreground">Your order is saved when you submit at the final step. WhatsApp then opens with the details filled in, where you can attach reference files.</p>
         </form>
       </Card>
     </Section>
