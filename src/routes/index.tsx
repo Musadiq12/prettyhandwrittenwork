@@ -111,7 +111,7 @@ function Index() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
           <a href="#top" className="flex min-w-0 items-center gap-3" aria-label={content.brandName + " home"}>
             {content.headerLogoUrl.trim() ? (
-              <img src={content.headerLogoUrl} alt="" className="size-11 shrink-0 rounded-xl border border-border object-contain" />
+              <img src={content.headerLogoUrl} alt="" loading="eager" fetchPriority="high" decoding="async" width={44} height={44} className="size-11 shrink-0 rounded-xl border border-border object-contain" />
             ) : (
               <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-secondary text-foreground" aria-hidden>
                 <BookOpen className="size-6" />
