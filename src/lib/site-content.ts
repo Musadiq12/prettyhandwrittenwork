@@ -104,20 +104,59 @@ function mergeContent(raw: unknown): SiteContent {
   };
 }
 
+const SITE_CONTENT_CACHE_KEY = "pretty-handwritten-work:site-content:v1";
+
+function readCachedSiteContent(): { content: SiteContent; savedAt: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SITE_CONTENT_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { content?: unknown; savedAt?: unknown };
+    if (!parsed.content || typeof parsed.content !== "object" || Array.isArray(parsed.content)) return null;
+    return {
+      content: mergeContent(parsed.content),
+      savedAt: typeof parsed.savedAt === "number" ? parsed.savedAt : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function cacheSiteContent(content: SiteContent): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SITE_CONTENT_CACHE_KEY, JSON.stringify({ content, savedAt: Date.now() }));
+  } catch {
+    // Storage may be disabled or full; the site still works without this cache.
+  }
+}
+
 export const siteContentQuery = queryOptions({
   queryKey: ["site-content"],
   queryFn: async (): Promise<SiteContent> => {
-    const { data, error } = await supabase.from("site_content").select("content").eq("id", 1).maybeSingle() as {
-      data: { content: unknown } | null; error: { message: string } | null;
-    };
-    if (error || !data?.content) return DEFAULT_SITE_CONTENT;
-    return mergeContent(data.content);
+    try {
+      const { data, error } = await supabase.from("site_content").select("content").eq("id", 1).maybeSingle() as {
+        data: { content: unknown } | null; error: { message: string } | null;
+      };
+      if (error || !data?.content) return readCachedSiteContent()?.content ?? DEFAULT_SITE_CONTENT;
+      const content = mergeContent(data.content);
+      cacheSiteContent(content);
+      return content;
+    } catch {
+      return readCachedSiteContent()?.content ?? DEFAULT_SITE_CONTENT;
+    }
   },
   staleTime: 60_000,
 });
 
 export function useSiteContent(): SiteContent {
-  const { data } = useQuery({ ...siteContentQuery, placeholderData: DEFAULT_SITE_CONTENT });
+  const cached = readCachedSiteContent();
+  const { data } = useQuery({
+    ...siteContentQuery,
+    initialData: cached?.content ?? DEFAULT_SITE_CONTENT,
+    initialDataUpdatedAt: cached?.savedAt || 0,
+    refetchOnMount: "always",
+  });
   return data ?? DEFAULT_SITE_CONTENT;
 }
 
