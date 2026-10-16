@@ -26,7 +26,9 @@ export function ImageStreamHero({ images, children, className }: ImageStreamHero
                   key={i}
                   src={img.src}
                   alt={i < row.length ? img.alt : ""}
-                  loading="lazy"
+                  loading={i < row.length ? "eager" : "lazy"}
+                  fetchPriority={i === 0 ? "high" : "auto"}
+                  decoding="async"
                   width={320}
                   height={213}
                   className="h-36 w-52 shrink-0 rounded-xl object-cover shadow-paper md:h-40 md:w-60"
