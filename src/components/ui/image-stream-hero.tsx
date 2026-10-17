@@ -16,7 +16,7 @@ interface ImageStreamHeroProps {
 export function ImageStreamHero({ images, children, className }: ImageStreamHeroProps) {
   const rows = [0, 1, 2].map((r) => images.filter((_, i) => i % 3 === r));
   return (
-    <section className={cn("relative isolate h-[520px] w-full max-w-none overflow-hidden md:h-[560px]", className)}>
+    <section className={cn("relative isolate h-auto min-h-[520px] w-full max-w-none overflow-hidden md:h-[560px] md:min-h-0", className)}>
       <div className="absolute inset-0 flex w-full flex-col justify-center gap-4 [perspective:900px]" aria-hidden="true">
         {rows.map((row, r) => (
           <div key={r} className="stream-row" style={{ transform: `rotateX(${(1 - r) * 8}deg)` }}>
@@ -39,7 +39,7 @@ export function ImageStreamHero({ images, children, className }: ImageStreamHero
         ))}
       </div>
       <div className="hero-veil pointer-events-none absolute inset-0" />
-      <div className="relative z-10 flex h-full w-full items-center justify-center px-5">{children}</div>
+      <div className="relative z-10 flex min-h-[520px] w-full items-center justify-center px-4 py-8 md:h-full md:min-h-0 md:px-5 md:py-0">{children}</div>
     </section>
   );
 }
