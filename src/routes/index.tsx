@@ -130,9 +130,9 @@ function Index() {
       </header>
       <div id="top">
       <ImageStreamHero images={content.heroImages}>
-        <div className="fade-up mx-4 max-w-2xl rounded-3xl border border-white/30 bg-background/85 p-7 text-center shadow-xl backdrop-blur-md md:p-10">
+        <div className="fade-up mx-0 w-full max-w-2xl rounded-3xl border border-white/30 bg-background/90 p-5 text-center shadow-xl backdrop-blur-md sm:mx-4 sm:p-7 md:p-10">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{content.heroEyebrow}</p>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">{content.heroHeading}</h1>
+          <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-6xl [overflow-wrap:anywhere]">{content.heroHeading}</h1>
           <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground md:text-base">{content.heroDescription}</p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="min-h-12 rounded-full px-7 shadow-sm">
